@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>励步-奇声妙想 Firstleap Voice Magic</title>
     <style>
-        /* ================= 时尚可爱风格样式 ================= */
+        /* ================= 保持原有的时尚可爱风格样式 ================= */
         :root {
             --bg-cream: #F9F6E8;
             --card-white: #ffffff;
@@ -96,11 +96,28 @@
         .btn-stop { 
             background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); 
             animation: pulse 1.5s infinite; 
-            position: relative; z-index: 1002; /* 保证全屏时按钮在最上层 */
+            position: relative; z-index: 1002;
         }
         
         .btn-group { display: flex; gap: 15px; margin-top: 15px; }
-        .btn-download { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); text-decoration: none; line-height: 1.5; flex: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; font-weight: bold; border-radius: 25px; box-shadow: 0 6px 0 rgba(0,0,0,0.1); }
+        /* 修改：下载按钮样式，去除flex居中，用block保证点击区域 */
+        .btn-download { 
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
+            text-decoration: none; 
+            line-height: 1.5; 
+            flex: 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            color: #fff; 
+            font-weight: bold; 
+            border-radius: 25px; 
+            box-shadow: 0 6px 0 rgba(0,0,0,0.1); 
+            font-size: 18px;
+            padding: 16px;
+            border: none;
+        }
         .btn-retry { background: #dfe6e9; color: #636e72; box-shadow: 0 4px 0 #b2bec3; flex: 1; }
 
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
@@ -179,16 +196,6 @@
         .progress-bar { width: 0%; height: 100%; background: #fff; border-radius: 8px; transition: width 0.2s ease; }
         
         @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 50% { transform: scale(1.2); } 100% { transform: scale(1); opacity: 1; } }
-
-        /* ================= 微信提示遮罩 ================= */
-        #wechat-tip-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85); z-index: 10000; display: none;
-            color: #fff; text-align: center; padding-top: 40px;
-        }
-        .arrow-icon { position: absolute; top: 10px; right: 20px; font-size: 60px; animation: float 1.5s infinite ease-in-out; }
-        .wechat-text { margin-top: 80px; font-size: 18px; line-height: 1.6; font-weight: bold; padding: 0 20px; }
-        @keyframes float { 0%, 100% { transform: translateY(0) rotate(-20deg); } 50% { transform: translateY(-10px) rotate(-20deg); } }
     </style>
 </head>
 <body>
@@ -207,19 +214,6 @@
         <div class="progress-bar" id="progressBar"></div>
     </div>
     <div style="color:white; margin-top:10px; font-weight:bold;" id="progressText">0%</div>
-</div>
-
-<!-- 微信引导层 -->
-<div id="wechat-tip-overlay" onclick="this.style.display='none'">
-    <div class="arrow-icon">⤴️</div>
-    <div class="wechat-text">
-        <p style="font-size:22px; color:#F9CA24;">微信内无法直接下载</p>
-        <p>请点击右上角 <b>...</b></p>
-        <p>选择 <b>"在浏览器打开"</b></p>
-        <p>即可正常保存 MP4 视频</p>
-        <br>
-        <p style="font-size:14px; color:#aaa;">(点击任意处关闭提示)</p>
-    </div>
 </div>
 
 <div class="container">
@@ -263,7 +257,7 @@
         <canvas id="processCanvas"></canvas>
     </div>
 
-    <!-- 结果区域 -->
+    <!-- 结果区域：默认隐藏，只有当视频完全生成后才会显示 -->
     <div id="resultArea" class="preview-box">
         <h3 style="color:var(--rabbit-red); margin-top:0;">🎉 配音完成！Amazing!</h3>
         <p style="font-size:12px; color:#999; margin-bottom:15px;">如果听不到声音，请检查手机静音键</p>
@@ -271,15 +265,14 @@
         <!-- 结果视频 -->
         <video id="previewVideo" style="width:100%; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1); background:#000;" controls playsinline></video>
         
-        <!-- 链接区域已移除 -->
-
         <div class="btn-group">
             <button class="btn btn-retry" onclick="resetRecording()">🔄 重录 Retry</button>
-            <a id="downloadLink" class="btn btn-download" onclick="handleDownloadClick(event)">💾 保存视频 (Save MP4)</a>
+            <!-- 修改：下载按钮直接使用 download 属性，点击即可触发 -->
+            <a id="downloadLink" class="btn btn-download" target="_blank">💾 保存视频 (Save MP4)</a>
         </div>
         
         <div style="font-size:10px; color:#999; margin-top:15px; text-align:center;">
-            * 微信提示：如果点击保存无反应，请点击右上角选择“在浏览器打开”
+            * 如果点击无反应，请尝试长按上方的视频选择"保存"
         </div>
     </div>
 </div>
@@ -553,7 +546,6 @@
         mainVideo.pause();
         mainVideo.controls = true;
         
-        // 退出全屏模式（以防万一）
         exitFullscreenMode();
 
         const preview = document.getElementById("previewVideo");
@@ -567,14 +559,13 @@
 
     // ================= 核心录制逻辑 =================
 
-    // 优化：优先选择 MP4
     function getBestMimeType() {
         const types = [
             "video/mp4;codecs=avc1",      // iOS/Safari 优先
-            "video/mp4",                  // 尝试标准 MP4
-            "video/webm;codecs=h264",     // Chrome 带 H264
-            "video/webm;codecs=vp9",      // 高质量 WebM
-            "video/webm"                  // 通用 WebM
+            "video/mp4",                  
+            "video/webm;codecs=h264",     
+            "video/webm;codecs=vp9",      
+            "video/webm"                  
         ];
         for (const type of types) {
             if (MediaRecorder.isTypeSupported(type)) {
@@ -613,7 +604,7 @@
             return;
         }
 
-        // 倒计时动画
+        // 倒计时
         const overlay = document.getElementById('countdown-overlay');
         const text = document.getElementById('countdownText');
         let count = 3;
@@ -636,27 +627,23 @@
                 text.innerText = "GO!";
                 setTimeout(() => {
                     overlay.style.display = 'none';
-                    enterFullscreenMode(); // 进入全屏
+                    enterFullscreenMode(); 
                     executeActualRecording();
                 }, 500);
             }
         }, 1000);
     }
 
-    // 新增：进入全屏模式
     function enterFullscreenMode() {
         document.body.classList.add('recording-mode');
-        // 尝试浏览器原生全屏
         const docElm = document.documentElement;
         if (docElm.requestFullscreen) { docElm.requestFullscreen().catch(e=>{}); }
         else if (docElm.mozRequestFullScreen) { docElm.mozRequestFullScreen().catch(e=>{}); }
         else if (docElm.webkitRequestFullScreen) { docElm.webkitRequestFullScreen().catch(e=>{}); }
     }
 
-    // 新增：退出全屏模式
     function exitFullscreenMode() {
         document.body.classList.remove('recording-mode');
-        // 退出原生全屏
         if (document.exitFullscreen) { document.exitFullscreen().catch(e=>{}); }
         else if (document.mozCancelFullScreen) { document.mozCancelFullScreen().catch(e=>{}); }
         else if (document.webkitCancelFullScreen) { document.webkitCancelFullScreen().catch(e=>{}); }
@@ -755,7 +742,7 @@
         try {
             mediaRecorder = new MediaRecorder(combinedStream, { 
                 mimeType: recordedMimeType, 
-                videoBitsPerSecond: 2500000 // 提高一点码率保证清晰度
+                videoBitsPerSecond: 2500000 
             });
         } catch (e) {
             console.error("Recorder init fail:", e);
@@ -770,7 +757,8 @@
         };
         
         mediaRecorder.onstop = () => {
-             console.log("Recorder stopped. Chunks count:", recordedChunks.length);
+             console.log("Recorder stopped.");
+             // 关键修改：录制停止后立即启动进度条动画，动画结束后才生成 Blob 并显示按钮
              startProcessingAnimation(); 
         };
 
@@ -784,7 +772,6 @@
         actionBtn.innerHTML = "⏹️ 完成配音 (Stop)";
         actionBtn.className = "btn btn-stop";
         
-        // 录制时不显示状态文字，以免遮挡，或者简单显示
         status.innerText = "🔴 录制中 (Recording)...";
         status.style.color = "#FF0000";
         
@@ -804,7 +791,6 @@
         } catch (e) { 
             console.error("Canvas Draw Error:", e);
             isRecording = false;
-            // 退出全屏方便看错误
             exitFullscreenMode();
             alert("录制中断：跨域限制(CORS)。请联系管理员给视频服务器添加 'Access-Control-Allow-Origin: *' 头。");
             stopRecording();
@@ -819,7 +805,6 @@
         isRecording = false;
         cancelAnimationFrame(animationFrameId);
 
-        // 退出全屏
         exitFullscreenMode();
 
         const video = document.getElementById("mainVideo");
@@ -828,6 +813,7 @@
         video.pause();
         video.controls = true;
 
+        // 停止 Recorder
         if (mediaRecorder && mediaRecorder.state !== "inactive") {
             mediaRecorder.stop();
         }
@@ -844,6 +830,9 @@
     // ================= 压制进度 & 结果展示 =================
 
     function startProcessingAnimation() {
+        // 确保 Result 区域是隐藏的
+        document.getElementById("resultArea").style.display = "none";
+        
         const overlay = document.getElementById('processing-overlay');
         const bar = document.getElementById('progressBar');
         const text = document.getElementById('progressText');
@@ -854,6 +843,7 @@
         text.innerText = '0%';
 
         const interval = setInterval(() => {
+            // 模拟进度
             progress += Math.floor(Math.random() * 5) + 2; 
             if (progress > 100) progress = 100;
 
@@ -862,57 +852,55 @@
 
             if (progress >= 100) {
                 clearInterval(interval);
+                // 进度条走完后，调用生成逻辑
                 setTimeout(() => {
-                    overlay.style.display = 'none';
-                    showFinalResult(); 
+                    generateVideoAndShowResult(overlay); 
                 }, 500);
             }
         }, 50); 
     }
 
-    function showFinalResult() {
+    function generateVideoAndShowResult(overlay) {
         if(recordedChunks.length === 0) {
+            overlay.style.display = 'none';
             alert("录制失败：数据为空。可能是因为没有获取到画面或声音。");
             return;
         }
 
-        // 强制检查类型
-        let type = recordedMimeType || 'video/webm';
-        const blob = new Blob(recordedChunks, { type: type });
-        const url = URL.createObjectURL(blob);
-        
-        const preview = document.getElementById("previewVideo");
-        preview.src = url;
-        
-        // 强制把下载后缀名为 .mp4，即使内部编码可能是 WebM
-        // 大多数现代播放器和微信能识别这种"伪"MP4
-        let filename = `Firstleap_Voice_${Date.now()}.mp4`;
-
-        const downloadBtn = document.getElementById("downloadLink");
-        
-        downloadBtn.href = url;
-        downloadBtn.download = filename;
-
-        // 移除了链接生成框的相关逻辑
-        
-        document.getElementById("actionBtn").style.display = "none";
-        
-        const resultArea = document.getElementById("resultArea");
-        resultArea.style.display = "block";
-        resultArea.scrollIntoView({behavior: "smooth"});
-        
-        document.getElementById("statusText").innerText = "🎉 制作成功！Excellent!";
-    }
-
-    function isWeChat() {
-        return /MicroMessenger/i.test(navigator.userAgent);
-    }
-
-    function handleDownloadClick(event) {
-        // 微信内拦截下载点击
-        if (isWeChat()) {
-            event.preventDefault();
-            document.getElementById("wechat-tip-overlay").style.display = "block";
+        try {
+            // 1. 创建 Blob
+            let type = recordedMimeType || 'video/webm';
+            const blob = new Blob(recordedChunks, { type: type });
+            
+            // 2. 生成 URL
+            const url = URL.createObjectURL(blob);
+            
+            // 3. 设置预览视频源
+            const preview = document.getElementById("previewVideo");
+            preview.src = url;
+            
+            // 4. 配置下载按钮
+            const downloadBtn = document.getElementById("downloadLink");
+            let filename = `Firstleap_Voice_${Date.now()}.mp4`; // 默认后缀
+            
+            // 绑定 href 和 download 属性
+            downloadBtn.href = url;
+            downloadBtn.download = filename;
+            
+            // 5. UI 切换
+            document.getElementById("actionBtn").style.display = "none";
+            overlay.style.display = 'none'; // 隐藏遮罩
+            
+            const resultArea = document.getElementById("resultArea");
+            resultArea.style.display = "block"; // 显示结果区域
+            resultArea.scrollIntoView({behavior: "smooth"});
+            
+            document.getElementById("statusText").innerText = "🎉 制作成功！Excellent!";
+            
+        } catch(e) {
+            console.error(e);
+            overlay.style.display = 'none';
+            alert("视频生成出错，请重试");
         }
     }
 
