@@ -103,16 +103,6 @@
         .btn-download { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); text-decoration: none; line-height: 1.5; flex: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; font-weight: bold; border-radius: 25px; box-shadow: 0 6px 0 rgba(0,0,0,0.1); }
         .btn-retry { background: #dfe6e9; color: #636e72; box-shadow: 0 4px 0 #b2bec3; flex: 1; }
 
-        .link-box-container {
-            margin-top: 20px; background: #f0f7ff; padding: 15px; border-radius: 20px;
-            border: 2px dashed #4facfe; display: none;
-        }
-        .link-label { font-size: 14px; color: #555; margin-bottom: 8px; display: block; font-weight: bold; }
-        .link-input-group { display: flex; gap: 8px; }
-        .link-input { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ccc; background: #fff; color: #888; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .btn-copy { background: #4facfe; color: white; border: none; padding: 0 15px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 13px; white-space: nowrap; }
-        .btn-copy:active { transform: scale(0.95); }
-
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
@@ -127,8 +117,7 @@
         .preview-box { margin-top: 25px; padding: 20px; border: 3px dashed var(--pear-yellow); border-radius: 20px; display: none; background: #fffcf0; }
         .tip { font-size: 13px; color: #e67e22; margin-top: 12px; background: #fff3e0; padding: 12px; border-radius: 15px; border: none; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
 
-        /* ================= 录制时的全屏样式 (新增) ================= */
-        /* 当 body 拥有 recording-mode 类时 */
+        /* ================= 录制时的全屏样式 ================= */
         body.recording-mode {
             overflow: hidden; background: #000; padding: 0;
         }
@@ -259,7 +248,6 @@
             <div id="loadingText" style="color: #555; font-weight: bold;">加载中 Loading...</div>
         </div>
 
-        <!-- 关键修改：crossOrigin 必须存在，否则无法录制 -->
         <video id="mainVideo" playsinline controls controlsList="nodownload" crossOrigin="anonymous">
             <source src="" type="video/mp4">
             您的浏览器不支持视频标签。
@@ -283,28 +271,21 @@
         <!-- 结果视频 -->
         <video id="previewVideo" style="width:100%; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1); background:#000;" controls playsinline></video>
         
-        <!-- 链接复制区域 -->
-        <div id="linkBoxContainer" class="link-box-container">
-            <span class="link-label">🔗 视频下载链接 (Video Link)</span>
-            <div class="link-input-group">
-                <input type="text" class="link-input" id="videoLinkInput" readonly value="正在生成链接..." onclick="this.select()">
-                <button class="btn-copy" onclick="copyVideoLink()">📋 复制 Copy</button>
-            </div>
-            <div style="font-size:10px; color:#999; margin-top:5px; text-align:left;">
-                * 微信提示：微信内无法直接下载本地视频，请点击下方“保存视频”按提示操作，或复制链接去浏览器使用。
-            </div>
-        </div>
+        <!-- 链接区域已移除 -->
 
         <div class="btn-group">
             <button class="btn btn-retry" onclick="resetRecording()">🔄 重录 Retry</button>
             <a id="downloadLink" class="btn btn-download" onclick="handleDownloadClick(event)">💾 保存视频 (Save MP4)</a>
+        </div>
+        
+        <div style="font-size:10px; color:#999; margin-top:15px; text-align:center;">
+            * 微信提示：如果点击保存无反应，请点击右上角选择“在浏览器打开”
         </div>
     </div>
 </div>
 
 <script>
     // ================= 数据配置区 =================
-    // 请保留你完整的 videoDatabase 数据，这里仅为示例结构
     const videoDatabase = {
         "K2A": [
             "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763011941537284494.mp4", 
@@ -492,7 +473,6 @@
         const url = videoDatabase[lvl][unitIndex];
         
         document.getElementById("resultArea").style.display = "none";
-        document.getElementById("linkBoxContainer").style.display = "none";
         
         actionBtn.style.display = "none";
         actionBtn.className = "btn btn-record";
@@ -558,7 +538,6 @@
 
     function resetRecording() {
         document.getElementById("resultArea").style.display = "none";
-        document.getElementById("linkBoxContainer").style.display = "none";
         
         const actionBtn = document.getElementById("actionBtn");
         actionBtn.style.display = "block";
@@ -914,15 +893,7 @@
         downloadBtn.href = url;
         downloadBtn.download = filename;
 
-        const linkContainer = document.getElementById("linkBoxContainer");
-        const linkInput = document.getElementById("videoLinkInput");
-        
-        if (isWeChat()) {
-            linkInput.value = window.location.href;
-        } else {
-            linkInput.value = url; 
-        }
-        linkContainer.style.display = "block";
+        // 移除了链接生成框的相关逻辑
         
         document.getElementById("actionBtn").style.display = "none";
         
@@ -945,39 +916,6 @@
         }
     }
 
-    function copyVideoLink() {
-        const linkInput = document.getElementById("videoLinkInput");
-        const urlToCopy = linkInput.value;
-        
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(urlToCopy).then(() => {
-                handleCopySuccess();
-            }).catch(err => {
-                fallbackCopyText(linkInput);
-            });
-        } else {
-            fallbackCopyText(linkInput);
-        }
-    }
-
-    function fallbackCopyText(inputElement) {
-        inputElement.select();
-        inputElement.setSelectionRange(0, 99999);
-        try {
-            document.execCommand('copy');
-            handleCopySuccess();
-        } catch (err) {
-            alert('复制失败，请长按链接手动复制');
-        }
-    }
-
-    function handleCopySuccess() {
-        if (isWeChat()) {
-            alert("✅ 页面链接已复制！\n由于微信限制，请打开 浏览器 (Safari/Chrome) \n粘贴链接后重新录制即可直接下载 MP4。");
-        } else {
-            alert("✅ 链接已复制！\n注意：此链接为本地临时链接，关闭页面后将失效。");
-        }
-    }
 </script>
 
 </body>
