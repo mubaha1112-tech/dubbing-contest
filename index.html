@@ -204,7 +204,7 @@
             border: 4px solid #fff;
         }
         
-        /* 全屏时的样式调整，确保视频居中 */
+        /* 全屏时的样式调整 */
         video:fullscreen {
             border: none;
             border-radius: 0;
@@ -251,9 +251,49 @@
         }
         .spinner { border: 5px solid #f3f3f3; border-top: 5px solid var(--rabbit-red); border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* ================= 倒计时遮罩 ================= */
+        #countdown-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 142, 142, 0.95); /* 兔子粉半透明背景 */
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            backdrop-filter: blur(5px);
+        }
+        .countdown-number {
+            font-size: 150px;
+            color: #fff;
+            font-weight: 900;
+            text-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+            font-family: "Arial Rounded MT Bold", "Comic Sans MS", sans-serif;
+            animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .countdown-sub {
+            font-size: 24px;
+            color: #fff;
+            margin-top: 20px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
+
+<!-- 倒计时层 -->
+<div id="countdown-overlay">
+    <div class="countdown-number" id="countdownText">3</div>
+    <div class="countdown-sub">Ready?</div>
+</div>
 
 <div class="container">
     <!-- 头部图片 -->
@@ -294,7 +334,7 @@
         <!-- 播放控制按钮 -->
         <button class="btn btn-play" id="playBtn" onclick="togglePreview()">▶️ 预览原片 Preview</button>
 
-        <button class="btn btn-record" id="recordBtn" onclick="startRecording()">🎙️ 准备就绪，开始配音</button>
+        <button class="btn btn-record" id="recordBtn" onclick="prepareAndStartRecording()">🎙️ 准备就绪，开始配音</button>
         <button class="btn btn-stop" id="stopBtn" onclick="stopRecording()">⏹️ 完成配音，生成视频</button>
         
         <canvas id="processCanvas"></canvas>
@@ -598,29 +638,26 @@
         document.getElementById("video-container").scrollIntoView({behavior: "smooth"});
     }
 
-    // ================= 核心混音录制逻辑 =================
+    // ================= 倒计时与录制准备逻辑 =================
 
-    async function startRecording() {
+    async function prepareAndStartRecording() {
         const video = document.getElementById("mainVideo");
-        const canvas = document.getElementById("processCanvas");
-        const ctx = canvas.getContext("2d");
-        const status = document.getElementById("statusText");
-        const playBtn = document.getElementById("playBtn");
 
         if (video.readyState < 3) {
             alert("视频尚未加载完成");
             return;
         }
 
+        // 1. 先获取麦克风权限，确保倒计时结束后不会被弹窗打断
         try {
+            // 预先初始化AudioContext以满足用户手势要求
             const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioCtx = new AudioContext();
-        } catch (e) {
-            alert("您的浏览器不支持 Web Audio API");
-            return;
-        }
+            if (!audioCtx || audioCtx.state === 'closed') {
+                audioCtx = new AudioContext();
+            } else if (audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
 
-        try {
             micStream = await navigator.mediaDevices.getUserMedia({ 
                 audio: { 
                     echoCancellation: true, 
@@ -633,45 +670,81 @@
             return;
         }
 
-        // === 关键逻辑：开始录音前，重置视频到开头 ===
+        // 2. 显示倒计时遮罩
+        const overlay = document.getElementById('countdown-overlay');
+        const text = document.getElementById('countdownText');
+        let count = 3;
+        
+        overlay.style.display = 'flex';
+        text.innerText = count;
+        
+        // 清除旧的动画类以便重新触发
+        text.style.animation = 'none';
+        text.offsetHeight; /* trigger reflow */
+        text.style.animation = 'popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+
+        const timer = setInterval(() => {
+            count--;
+            if (count > 0) {
+                text.innerText = count;
+                // 重置动画
+                text.style.animation = 'none';
+                text.offsetHeight; 
+                text.style.animation = 'popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            } else {
+                clearInterval(timer);
+                text.innerText = "GO!";
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    // 3. 倒计时结束，正式开始录制逻辑
+                    executeActualRecording();
+                }, 500);
+            }
+        }, 1000);
+    }
+
+    async function executeActualRecording() {
+        const video = document.getElementById("mainVideo");
+        const canvas = document.getElementById("processCanvas");
+        const ctx = canvas.getContext("2d");
+        const status = document.getElementById("statusText");
+        const playBtn = document.getElementById("playBtn");
+        
+        // === 视频重置与全屏 ===
         video.pause();
         video.currentTime = 0;
         video.muted = false; 
         video.volume = 1.0; 
         
-        // 【关键修改】录音时隐藏原生控件，禁止拖动进度条
+        // 录音时隐藏原生控件
         video.controls = false;
-        
         playBtn.innerHTML = "▶️ 预览原片 Preview"; 
         
-        // ============================================================
-        // [新增逻辑] 尝试进入全屏模式
-        // 兼容 Chrome, Safari, iOS, IE/Edge
-        // ============================================================
+        // 尝试全屏
         try {
             if (video.requestFullscreen) {
                 await video.requestFullscreen();
             } else if (video.webkitRequestFullscreen) {
                 await video.webkitRequestFullscreen();
             } else if (video.webkitEnterFullscreen) {
-                // iOS 视频元素特有全屏方法
                 video.webkitEnterFullscreen();
             } else if (video.msRequestFullscreen) {
                 await video.msRequestFullscreen();
             }
         } catch (err) {
             console.log("全屏进入失败或被拦截:", err);
-            // 即使全屏失败，也不影响继续录制，所以不return
         }
         
+        // 播放视频
         try {
             await video.play();
         } catch (e) {
-            alert("自动播放失败，请手动播放后重试");
-            video.controls = true; // 失败则恢复控件
+            alert("自动播放失败，请手动点击播放");
+            video.controls = true; 
             return;
         }
         
+        // === 音频节点设置 ===
         dest = audioCtx.createMediaStreamDestination();
         micGainNode = audioCtx.createGain();
         videoGainNode = audioCtx.createGain();
@@ -693,11 +766,12 @@
             }
             sourceVideo.connect(videoGainNode);
             videoGainNode.connect(dest);
-            sourceVideo.connect(audioCtx.destination); 
+            sourceVideo.connect(audioCtx.destination); // 同时也让用户听到
         } catch (e) {
             console.error(e);
         }
 
+        // === 录制设置 ===
         canvas.width = video.videoWidth || 640;
         canvas.height = video.videoHeight || 360;
         canvasStream = canvas.captureStream(30);
@@ -753,9 +827,7 @@
         const video = document.getElementById("mainVideo");
         video.pause();
         
-        // ============================================================
-        // [新增逻辑] 尝试退出全屏模式
-        // ============================================================
+        // 尝试退出全屏
         try {
             if (document.fullscreenElement || document.webkitFullscreenElement) {
                 if (document.exitFullscreen) {
@@ -770,7 +842,7 @@
             console.log("退出全屏时发生非关键错误:", e);
         }
         
-        // 【关键修改】停止录音后，恢复控件，允许拖拽回看
+        // 恢复控件
         video.controls = true;
 
         if (mediaRecorder && mediaRecorder.state !== "inactive") {
