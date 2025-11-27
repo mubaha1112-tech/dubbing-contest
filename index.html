@@ -98,6 +98,31 @@
         .btn-download { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); text-decoration: none; line-height: 1.5; flex: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; font-weight: bold; border-radius: 25px; box-shadow: 0 6px 0 rgba(0,0,0,0.1); }
         .btn-retry { background: #dfe6e9; color: #636e72; box-shadow: 0 4px 0 #b2bec3; flex: 1; }
 
+        /* 新增：链接复制区域样式 */
+        .link-box-container {
+            margin-top: 20px;
+            background: #f0f7ff;
+            padding: 15px;
+            border-radius: 20px;
+            border: 2px dashed #4facfe;
+            display: none; /* 默认隐藏，生成后显示 */
+        }
+        .link-label {
+            font-size: 14px; color: #555; margin-bottom: 8px; display: block; font-weight: bold;
+        }
+        .link-input-group {
+            display: flex; gap: 8px;
+        }
+        .link-input {
+            flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ccc; background: #fff;
+            color: #888; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .btn-copy {
+            background: #4facfe; color: white; border: none; padding: 0 15px; border-radius: 10px;
+            font-weight: bold; cursor: pointer; font-size: 13px; white-space: nowrap;
+        }
+        .btn-copy:active { transform: scale(0.95); }
+
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
@@ -177,8 +202,8 @@
 <div id="wechat-tip-overlay" onclick="this.style.display='none'">
     <div class="arrow-icon">⤴️</div>
     <div class="wechat-text">
-        <p style="font-size:22px; color:#F9CA24;">无法直接下载</p>
-        <p>由于微信限制，请点击右上角 <b>...</b></p>
+        <p style="font-size:22px; color:#F9CA24;">微信内无法直接下载</p>
+        <p>请点击右上角 <b>...</b></p>
         <p>选择 <b>"在浏览器打开"</b></p>
         <p>即可正常保存视频</p>
         <br>
@@ -211,7 +236,6 @@
             <div id="loadingText" style="color: #555; font-weight: bold;">加载中 Loading...</div>
         </div>
 
-        <!-- 关键修改：添加 playsinline 和 crossOrigin -->
         <video id="mainVideo" playsinline controls controlsList="nodownload" crossOrigin="anonymous">
             <source src="" type="video/mp4">
             您的浏览器不支持视频标签。
@@ -220,10 +244,8 @@
         <div class="tip">🎧 <b>温馨提示：</b>配音前请务必佩戴耳机，以防回声啸叫！</div>
         <div class="status-text" id="statusText"></div>
 
-        <!-- 播放控制按钮 -->
         <button class="btn btn-play" id="playBtn" onclick="togglePreview()">▶️ 预览原片 Preview</button>
 
-        <!-- 录音按钮 -->
         <button class="btn btn-record" id="actionBtn" onclick="toggleRecording()">🎙️ 准备就绪，开始配音</button>
         
         <canvas id="processCanvas"></canvas>
@@ -237,6 +259,18 @@
         <!-- 结果视频 -->
         <video id="previewVideo" style="width:100%; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1); background:#000;" controls playsinline></video>
         
+        <!-- 新增：复制链接功能区 -->
+        <div id="linkBoxContainer" class="link-box-container">
+            <span class="link-label">🔗 视频下载链接 (Video Link)</span>
+            <div class="link-input-group">
+                <input type="text" class="link-input" id="videoLinkInput" readonly value="正在生成链接..." onclick="this.select()">
+                <button class="btn-copy" onclick="copyVideoLink()">📋 复制 Copy</button>
+            </div>
+            <div style="font-size:10px; color:#999; margin-top:5px; text-align:left;">
+                * 微信提示：微信内无法直接下载本地视频，请点击下方“保存视频”按提示操作，或复制链接去浏览器使用。
+            </div>
+        </div>
+
         <div class="btn-group">
             <button class="btn btn-retry" onclick="resetRecording()">🔄 重录 Retry</button>
             <a id="downloadLink" class="btn btn-download" onclick="handleDownloadClick(event)">💾 保存视频 Save</a>
@@ -246,6 +280,7 @@
 
 <script>
     // ================= 数据配置区 =================
+    // (此处保留原有的 videoDatabase 数据，为节省篇幅省略，请确保保留完整的 videoDatabase)
     const videoDatabase = {
         "K2A": [
             "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763011941537284494.mp4", 
@@ -434,6 +469,7 @@
         const url = videoDatabase[lvl][unitIndex];
         
         document.getElementById("resultArea").style.display = "none";
+        document.getElementById("linkBoxContainer").style.display = "none"; // 重置时隐藏链接框
         
         actionBtn.style.display = "none";
         actionBtn.className = "btn btn-record";
@@ -500,6 +536,7 @@
 
     function resetRecording() {
         document.getElementById("resultArea").style.display = "none";
+        document.getElementById("linkBoxContainer").style.display = "none"; // 隐藏链接
         
         const actionBtn = document.getElementById("actionBtn");
         actionBtn.style.display = "block";
@@ -526,7 +563,6 @@
 
     // ================= 核心录制逻辑 =================
 
-    // 修复点1：更详细的 MIME 类型探测，优先 MP4 适配 iOS
     function getBestMimeType() {
         const types = [
             "video/mp4;codecs=avc1",      // iOS Safari 14.8+ 偏好
@@ -559,7 +595,6 @@
             return;
         }
 
-        // 尝试获取麦克风权限
         try {
             micStream = await navigator.mediaDevices.getUserMedia({ 
                 audio: { 
@@ -609,7 +644,6 @@
         const status = document.getElementById("statusText");
         const actionBtn = document.getElementById("actionBtn");
         
-        // 初始化 AudioContext
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!audioCtx || audioCtx.state === 'closed') {
             audioCtx = new AudioContext();
@@ -617,7 +651,6 @@
             await audioCtx.resume();
         }
         
-        // 准备视频播放
         video.currentTime = 0;
         video.muted = false; 
         video.volume = 1.0; 
@@ -631,8 +664,7 @@
             return; 
         }
 
-        // 修复点2：限制 Canvas 分辨率，防止移动端黑屏或崩溃
-        // 强制最大宽度 1280 (720p)，保持宽高比
+        // 限制 Canvas 分辨率
         const MAX_WIDTH = 1280;
         let w = video.videoWidth;
         let h = video.videoHeight;
@@ -645,12 +677,10 @@
         canvas.width = w;
         canvas.height = h;
 
-        // 音频路由混合
         dest = audioCtx.createMediaStreamDestination();
         micGainNode = audioCtx.createGain();
         videoGainNode = audioCtx.createGain();
         
-        // 配音音量大，背景音量小
         micGainNode.gain.value = 3.0; 
         videoGainNode.gain.value = 0.2; 
 
@@ -667,13 +697,11 @@
             }
             sourceVideo.connect(videoGainNode);
             videoGainNode.connect(dest);
-            sourceVideo.connect(audioCtx.destination); // 让用户也能听到原声
+            sourceVideo.connect(audioCtx.destination); 
         } catch (e) { console.error("Audio routing error:", e); }
 
-        // 创建 Canvas 流
-        // 修复点3：iOS Safari 对 captureStream 的帧率非常敏感
         try {
-            canvasStream = canvas.captureStream(30); // 30fps通常更稳定
+            canvasStream = canvas.captureStream(30); 
         } catch(e) {
              console.error(e);
              alert("您的浏览器不支持 Canvas 录制，请尝试使用 Chrome。");
@@ -701,10 +729,9 @@
         }
 
         try {
-            // 修复点4：降低码率以减轻手机负担
             mediaRecorder = new MediaRecorder(combinedStream, { 
                 mimeType: recordedMimeType, 
-                videoBitsPerSecond: 1500000 // 1.5Mbps 足够 720p 清晰度
+                videoBitsPerSecond: 1500000 
             });
         } catch (e) {
             console.error("Recorder init fail:", e);
@@ -718,19 +745,16 @@
             }
         };
         
-        // 重要：这里只定义 onstop，但不在这里直接调用 finalize
-        // 改为由进度条动画结束后调用
         mediaRecorder.onstop = () => {
              console.log("Recorder stopped. Chunks count:", recordedChunks.length);
-             startProcessingAnimation(); // 开始展示假进度条，等进度条走完再 finalize
+             startProcessingAnimation(); 
         };
 
         isRecording = true;
         
-        // 启动绘制循环
         drawToCanvas(video, ctx, canvas);
         
-        mediaRecorder.start(1000); // 每秒切片一次，防止内存溢出
+        mediaRecorder.start(1000); 
         
         document.getElementById("playBtn").style.display = "none"; 
         actionBtn.innerHTML = "⏹️ 完成配音";
@@ -749,12 +773,10 @@
         }
         
         try {
-            // 修复点5：检测是否能绘制，防止黑屏但无报错
             if (video.readyState >= 2 && !video.paused && !video.ended) {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             }
         } catch (e) { 
-            // 如果出现 SecurityError，说明视频跨域被污染了
             console.error("Canvas Draw Error:", e);
             isRecording = false;
             alert("录制中断：视频源不允许跨域录制。请联系管理员配置 CORS 策略。");
@@ -776,15 +798,12 @@
         video.pause();
         video.controls = true;
 
-        // 停止录制器
         if (mediaRecorder && mediaRecorder.state !== "inactive") {
             mediaRecorder.stop();
         }
 
-        // 停止所有流
         if (micStream) micStream.getTracks().forEach(track => track.stop());
         
-        // 恢复 UI
         actionBtn.innerHTML = "🎙️ 准备就绪，开始配音";
         actionBtn.className = "btn btn-record";
         
@@ -794,7 +813,6 @@
 
     // ================= 压制进度 & 结果展示 =================
 
-    // 修复点6：通过进度条回调确保视觉和数据同步
     function startProcessingAnimation() {
         const overlay = document.getElementById('processing-overlay');
         const bar = document.getElementById('progressBar');
@@ -805,9 +823,8 @@
         bar.style.width = '0%';
         text.innerText = '0%';
 
-        // 确保至少有一点等待时间让 Blob 组装
         const interval = setInterval(() => {
-            progress += Math.floor(Math.random() * 5) + 2; // 随机增加进度
+            progress += Math.floor(Math.random() * 5) + 2; 
             if (progress > 100) progress = 100;
 
             bar.style.width = progress + '%';
@@ -815,10 +832,9 @@
 
             if (progress >= 100) {
                 clearInterval(interval);
-                // 增加一个小延时，确保用户看到 100%
                 setTimeout(() => {
                     overlay.style.display = 'none';
-                    showFinalResult(); // 进度条走完才展示结果
+                    showFinalResult(); 
                 }, 500);
             }
         }, 50); 
@@ -830,7 +846,6 @@
             return;
         }
 
-        // 修复点7：根据录制类型决定文件后缀，iOS 最好用 mp4
         let type = recordedMimeType || 'video/webm';
         const blob = new Blob(recordedChunks, { type: type });
         const url = URL.createObjectURL(blob);
@@ -849,8 +864,21 @@
         
         downloadBtn.href = url;
         downloadBtn.download = filename;
+
+        // ====== 新增：生成链接并显示 ======
+        const linkContainer = document.getElementById("linkBoxContainer");
+        const linkInput = document.getElementById("videoLinkInput");
         
-        // 隐藏录制按钮，显示结果区域
+        if (isWeChat()) {
+            // 在微信中，直接显示当前页面地址，方便复制
+            linkInput.value = window.location.href;
+        } else {
+            // 在普通浏览器中，显示 Blob 地址（虽然也没法分享，但符合请求）
+            linkInput.value = url; 
+        }
+        linkContainer.style.display = "block";
+        // ================================
+        
         document.getElementById("actionBtn").style.display = "none";
         
         const resultArea = document.getElementById("resultArea");
@@ -868,6 +896,42 @@
         if (isWeChat()) {
             event.preventDefault();
             document.getElementById("wechat-tip-overlay").style.display = "block";
+        }
+    }
+
+    // 新增：复制链接逻辑
+    function copyVideoLink() {
+        const linkInput = document.getElementById("videoLinkInput");
+        const urlToCopy = linkInput.value;
+        
+        // 优先尝试 navigator.clipboard
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(urlToCopy).then(() => {
+                handleCopySuccess();
+            }).catch(err => {
+                fallbackCopyText(linkInput);
+            });
+        } else {
+            fallbackCopyText(linkInput);
+        }
+    }
+
+    function fallbackCopyText(inputElement) {
+        inputElement.select();
+        inputElement.setSelectionRange(0, 99999); // For mobile devices
+        try {
+            document.execCommand('copy');
+            handleCopySuccess();
+        } catch (err) {
+            alert('复制失败，请长按链接手动复制');
+        }
+    }
+
+    function handleCopySuccess() {
+        if (isWeChat()) {
+            alert("✅ 页面链接已复制！\n由于微信限制，请打开 浏览器 (Safari/Chrome) \n粘贴链接后重新录制即可直接下载视频。");
+        } else {
+            alert("✅ 链接已复制！\n注意：此链接为本地临时链接，关闭页面后将失效。");
         }
     }
 </script>
