@@ -336,9 +336,15 @@
             box-shadow: none;
         }
         
-        /* 全屏录制时去掉“完成配音(Stop)”按钮 */
         body.recording-mode #actionBtn {
-            display: none !important;
+            position: relative;
+            bottom: auto;
+            left: auto;
+            transform: none;
+            width: 80%;
+            max-width: 260px;
+            margin: 16px auto 0;
+            z-index: 1001;
         }
         
         /* ================= 加载层 ================= */
@@ -430,58 +436,6 @@
             50% { transform: scale(1.2); }
             100% { transform: scale(1); opacity: 1; }
         }
-
-        /* ================= 结果区：外部下载/微信提示 ================= */
-        .share-box {
-            margin-top: 18px;
-            padding: 14px;
-            background: #fffdf4;
-            border: 2px dashed #ffd86b;
-            border-radius: 16px;
-            text-align: left;
-        }
-        .share-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .share-row .btn {
-            flex: 1;
-            margin-top: 0;
-        }
-        .link-line {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 10px;
-        }
-        .link-line input {
-            flex: 1;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid #eee;
-            font-size: 13px;
-            background: #fafafa;
-        }
-        .muted-text {
-            font-size: 12px;
-            color: #999;
-        }
-        .success-text {
-            color: #27ae60;
-            font-weight: bold;
-        }
-        .error-text {
-            color: #e74c3c;
-            font-weight: bold;
-        }
-        .wx-hint {
-            background: #fff3e0;
-            border-radius: 12px;
-            padding: 10px 12px;
-            color: #d35400;
-            font-size: 13px;
-        }
     </style>
 </head>
 <body>
@@ -550,26 +504,7 @@
                 <button class="btn btn-retry" onclick="resetRecording()">🔄 重录 Retry</button>
                 <a id="downloadLink" class="btn btn-download" target="_blank" style="display: none;">💾 保存视频 (Save)</a>
             </div>
-
-            <!-- 微信保存提示 + 外部下载链接 -->
-            <div id="externalDownloadBox" class="share-box" style="display:none;">
-                <div id="wxHint" class="wx-hint" style="display:none;">
-                    📌 微信内保存：长按上方视频，选择“保存视频”或“保存到手机”。<br>
-                    若希望分享到外部或在系统浏览器下载，请使用下方“生成外部下载链接”。
-                </div>
-
-                <div class="share-row">
-                    <button id="uploadBtn" class="btn btn-primary">☁️ 生成外部下载链接</button>
-                    <button id="copyBtn" class="btn btn-download" disabled>📋 复制下载链接</button>
-                </div>
-
-                <div class="link-line" id="linkLine" style="display:none;">
-                    <input id="externalLinkInput" type="text" readonly>
-                    <button id="openBtn" class="btn btn-retry" style="flex:0 0 auto; padding:10px 14px;">🌐 打开</button>
-                </div>
-                <div id="uploadStatus" class="muted-text" style="margin-top:8px;"></div>
-            </div>
-
+            
             <div id="waitingHint" style="text-align: center; margin: 20px 0; display: none;">
                 <div class="spinner" style="border: 3px solid #f3f3f3; border-top: 3px solid var(--rabbit-red); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: inline-block; margin-right: 10px;"></div>
                 <span style="color: var(--pear-yellow); font-weight: bold;">请等待视频合成...</span>
@@ -582,11 +517,6 @@
     </div>
     
     <script>
-        // ================= 基础工具：环境检测 =================
-        const UA = navigator.userAgent || '';
-        const IS_WECHAT = /MicroMessenger/i.test(UA);
-        const IS_IOS = /iP(hone|od|ad)/i.test(UA);
-
         // ================= 数据配置区 =================
         const videoDatabase = {
             "K2A": [
@@ -732,11 +662,6 @@
         let processingInterval = null;
         let processingProgress = 0;
 
-        // 外部下载相关
-        let lastRecordedBlob = null;
-        let lastExternalUrl = '';
-        let uploading = false;
-
         // ================= 初始化 =================
         const levels = Object.keys(videoDatabase);
         const levelSelect = document.getElementById("levelSelect");
@@ -866,20 +791,6 @@
                 URL.revokeObjectURL(preview.src);
                 preview.src = "";
             }
-
-            // 清理外链状态
-            lastRecordedBlob = null;
-            lastExternalUrl = '';
-            uploading = false;
-            const extBox = document.getElementById("externalDownloadBox");
-            const copyBtn = document.getElementById("copyBtn");
-            const linkLine = document.getElementById("linkLine");
-            const uploadStatus = document.getElementById("uploadStatus");
-            copyBtn.disabled = true;
-            linkLine.style.display = "none";
-            uploadStatus.innerText = "";
-            extBox.style.display = "none";
-            document.getElementById("wxHint").style.display = "none";
             
             document.getElementById("video-container").scrollIntoView({behavior: "smooth"});
         }
@@ -1123,14 +1034,11 @@
             
             isRecording = true;
             document.getElementById("playBtn").style.display = "none";
-            // 全屏录制时隐藏“完成配音(Stop)”按钮
-            const actionBtn = document.getElementById("actionBtn");
-            actionBtn.style.display = "none";
-            const status = document.getElementById("statusText");
+            actionBtn.innerHTML = "⏹️ 完成配音 (Stop)";
+            actionBtn.className = "btn btn-stop";
             status.innerText = "🔴 录制中 (Recording)...";
             status.style.color = "#FF0000";
             
-            // 录制完成后自动停止并退出（已在 stopRecording 内处理退出全屏）
             video.onended = stopRecording;
         }
 
@@ -1251,17 +1159,17 @@
             }
             
             try {
-                const type = (recordedMimeType || 'video/webm').toLowerCase();
+                const type = recordedMimeType || 'video/webm';
                 const blob = new Blob(recordedChunks, { type });
-                lastRecordedBlob = blob;
                 const url = URL.createObjectURL(blob);
                 
                 const preview = document.getElementById("previewVideo");
                 preview.src = url;
                 
                 const downloadBtn = document.getElementById("downloadLink");
+                const lowerType = type.toLowerCase();
                 let ext = '.mp4';
-                if (type.includes('webm')) {
+                if (lowerType.includes('webm')) {
                     ext = '.webm';
                 }
                 const filename = `Firstleap_Voice_${Date.now()}${ext}`;
@@ -1285,17 +1193,6 @@
                     document.getElementById("waitingHint").style.display = "none";
                     document.getElementById("downloadLink").style.display = "flex";
                 }, 2000);
-
-                // 展示“外部下载链接”区域（微信内优先提示长按保存）
-                const extBox = document.getElementById("externalDownloadBox");
-                const wxHint = document.getElementById("wxHint");
-                extBox.style.display = "block";
-                wxHint.style.display = IS_WECHAT ? "block" : "none";
-
-                // 微信里默认自动上传生成链接，便于分享/外部下载
-                if (IS_WECHAT) {
-                    autoStartUpload(filename);
-                }
                 
             } catch(e) {
                 console.error(e);
@@ -1304,194 +1201,6 @@
                 document.getElementById("statusText").style.color = "var(--rabbit-red)";
             }
         }
-
-        // ================= 外部下载链接：上传实现（无服务端） =================
-        // 说明：
-        // - 先尝试临时托管 litterbox（72 小时有效），失败后回退到 catbox。
-        // - 成功后得到一个可在任何浏览器打开的直链，支持复制/打开。
-        // - 仅用于作品便捷保存/下载，注意第三方服务的稳定性与保留时长。
-
-        function bindExternalButtons() {
-            const uploadBtn = document.getElementById("uploadBtn");
-            const copyBtn = document.getElementById("copyBtn");
-            const openBtn = document.getElementById("openBtn");
-
-            uploadBtn.onclick = () => {
-                const suggestedName = guessFileName();
-                startUploadFlow(suggestedName);
-            };
-            copyBtn.onclick = () => {
-                if (!lastExternalUrl) return;
-                copyText(lastExternalUrl).then(() => {
-                    setStatus("已复制到剪贴板，可以粘贴到系统浏览器打开下载。", true);
-                }).catch(() => {
-                    setStatus("复制失败，请手动长按链接选择复制。", false);
-                });
-            };
-            openBtn.onclick = () => {
-                if (!lastExternalUrl) return;
-                // 在微信内直接 open 往往仍在内置浏览器，建议用户“使用系统浏览器打开”
-                window.open(lastExternalUrl, "_blank");
-            };
-        }
-
-        function autoStartUpload(filename) {
-            // 避免重复触发
-            if (uploading || lastExternalUrl) return;
-            startUploadFlow(filename);
-        }
-
-        function guessFileName() {
-            const lowerType = (recordedMimeType || "video/webm").toLowerCase();
-            let ext = ".mp4";
-            if (lowerType.includes("webm")) ext = ".webm";
-            return "Firstleap_Voice_" + Date.now() + ext;
-        }
-
-        function setStatus(msg, success) {
-            const el = document.getElementById("uploadStatus");
-            el.classList.remove("success-text","error-text");
-            if (success === true) el.classList.add("success-text");
-            if (success === false) el.classList.add("error-text");
-            el.innerText = msg || "";
-        }
-
-        function setLink(url) {
-            lastExternalUrl = url;
-            const linkLine = document.getElementById("linkLine");
-            const input = document.getElementById("externalLinkInput");
-            const copyBtn = document.getElementById("copyBtn");
-            input.value = url;
-            linkLine.style.display = "flex";
-            copyBtn.disabled = false;
-        }
-
-        async function startUploadFlow(filename) {
-            if (!lastRecordedBlob) {
-                setStatus("没有可上传的视频，请先完成配音。", false);
-                return;
-            }
-            if (uploading) return;
-            uploading = true;
-            setStatus("开始上传到临时云端（最长保留约 72 小时）...", false);
-
-            try {
-                // 1) litterbox（72h）- 直链
-                const litter = await uploadToLitterbox(lastRecordedBlob, filename, (p) => {
-                    setStatus("上传中（litterbox）..." + p + "%", false);
-                });
-                if (litter && litter.url) {
-                    setStatus("上传成功（litterbox）！", true);
-                    setLink(litter.url);
-                    uploading = false;
-                    return;
-                }
-                // 2) 回退 catbox - 直链（可能长期）
-                const cat = await uploadToCatbox(lastRecordedBlob, filename, (p) => {
-                    setStatus("上传中（catbox）..." + p + "%", false);
-                });
-                if (cat && cat.url) {
-                    setStatus("上传成功（catbox）！", true);
-                    setLink(cat.url);
-                    uploading = false;
-                    return;
-                }
-
-                throw new Error("上传失败");
-            } catch (e) {
-                console.warn(e);
-                setStatus("抱歉，上传失败。请尝试微信内长按视频保存，或稍后再试。", false);
-            } finally {
-                uploading = false;
-            }
-        }
-
-        function xhrUpload(url, formData, onProgress) {
-            return new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.open("POST", url, true);
-                xhr.responseType = "text"; // 两个服务都返回纯文本（包含直链或错误信息）
-
-                xhr.upload.onprogress = (evt) => {
-                    if (evt.lengthComputable && typeof onProgress === "function") {
-                        const pct = Math.max(0, Math.min(100, Math.round((evt.loaded / evt.total) * 100)));
-                        onProgress(pct);
-                    }
-                };
-                xhr.onerror = () => reject(new Error("network error"));
-                xhr.ontimeout = () => reject(new Error("timeout"));
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        resolve(xhr.response || "");
-                    } else {
-                        reject(new Error("http " + xhr.status));
-                    }
-                };
-                xhr.send(formData);
-            });
-        }
-
-        // 上传到 litterbox（72h临时），成功返回 {url}
-        async function uploadToLitterbox(blob, filename, onProgress) {
-            const form = new FormData();
-            form.append("reqtype", "fileupload");
-            form.append("time", "72h"); // 可选：1h/12h/24h/72h
-            form.append("fileToUpload", blob, filename);
-
-            try {
-                const text = await xhrUpload("https://litterbox.catbox.moe/resources/internals/api.php", form, onProgress);
-                // 返回通常是一个以 https:// 开头的直链
-                if (typeof text === "string" && /^https?:\/\//i.test(text.trim())) {
-                    return { url: text.trim() };
-                }
-                return null;
-            } catch (e) {
-                return null;
-            }
-        }
-
-        // 上传到 catbox（可能长期），成功返回 {url}
-        async function uploadToCatbox(blob, filename, onProgress) {
-            const form = new FormData();
-            form.append("reqtype", "fileupload");
-            form.append("fileToUpload", blob, filename);
-            try {
-                const text = await xhrUpload("https://catbox.moe/user/api.php", form, onProgress);
-                if (typeof text === "string" && /^https?:\/\//i.test(text.trim())) {
-                    return { url: text.trim() };
-                }
-                return null;
-            } catch (e) {
-                return null;
-            }
-        }
-
-        // 简单复制文本（Clipboard API 不可用时回退）
-        function copyText(text) {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                return navigator.clipboard.writeText(text);
-            }
-            return new Promise((resolve, reject) => {
-                const ta = document.createElement("textarea");
-                ta.value = text;
-                ta.style.position = "fixed";
-                ta.style.left = "-9999px";
-                document.body.appendChild(ta);
-                ta.select();
-                try {
-                    const ok = document.execCommand("copy");
-                    document.body.removeChild(ta);
-                    if (ok) resolve();
-                    else reject(new Error("execCommand copy failed"));
-                } catch (e) {
-                    document.body.removeChild(ta);
-                    reject(e);
-                }
-            });
-        }
-
-        // 绑定外链按钮（一次）
-        bindExternalButtons();
     </script>
 </body>
 </html>
