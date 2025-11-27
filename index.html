@@ -36,6 +36,7 @@
             margin: 0 auto; 
             position: relative; 
             border: 5px solid #fff;
+            transition: all 0.3s ease;
         }
 
         /* === 头部样式 === */
@@ -45,7 +46,7 @@
             margin-bottom: 15px;
             overflow: hidden;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
-            min-height: 100px; background: #eee; /* 占位 */
+            min-height: 100px; background: #eee;
         }
         .header-banner img {
             width: 100%;
@@ -92,35 +93,24 @@
         .btn-play { background: linear-gradient(135deg, #fce38a 0%, #f38181 100%); display: none; margin-bottom: 10px; color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,0.1); }
         
         .btn-record { background: linear-gradient(to right, #ff5f6d, #ffc371); display: none; }
-        .btn-stop { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); animation: pulse 1.5s infinite; }
+        .btn-stop { 
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); 
+            animation: pulse 1.5s infinite; 
+            position: relative; z-index: 1002; /* 保证全屏时按钮在最上层 */
+        }
         
         .btn-group { display: flex; gap: 15px; margin-top: 15px; }
         .btn-download { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); text-decoration: none; line-height: 1.5; flex: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; font-weight: bold; border-radius: 25px; box-shadow: 0 6px 0 rgba(0,0,0,0.1); }
         .btn-retry { background: #dfe6e9; color: #636e72; box-shadow: 0 4px 0 #b2bec3; flex: 1; }
 
-        /* 新增：链接复制区域样式 */
         .link-box-container {
-            margin-top: 20px;
-            background: #f0f7ff;
-            padding: 15px;
-            border-radius: 20px;
-            border: 2px dashed #4facfe;
-            display: none; /* 默认隐藏，生成后显示 */
+            margin-top: 20px; background: #f0f7ff; padding: 15px; border-radius: 20px;
+            border: 2px dashed #4facfe; display: none;
         }
-        .link-label {
-            font-size: 14px; color: #555; margin-bottom: 8px; display: block; font-weight: bold;
-        }
-        .link-input-group {
-            display: flex; gap: 8px;
-        }
-        .link-input {
-            flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ccc; background: #fff;
-            color: #888; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-        }
-        .btn-copy {
-            background: #4facfe; color: white; border: none; padding: 0 15px; border-radius: 10px;
-            font-weight: bold; cursor: pointer; font-size: 13px; white-space: nowrap;
-        }
+        .link-label { font-size: 14px; color: #555; margin-bottom: 8px; display: block; font-weight: bold; }
+        .link-input-group { display: flex; gap: 8px; }
+        .link-input { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ccc; background: #fff; color: #888; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .btn-copy { background: #4facfe; color: white; border: none; padding: 0 15px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 13px; white-space: nowrap; }
         .btn-copy:active { transform: scale(0.95); }
 
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
@@ -128,7 +118,7 @@
 
         /* ================= 视频区域 ================= */
         #video-container { margin-top: 25px; display: none; position: relative; min-height: 200px; }
-        video { width: 100%; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); background: #000; outline: none; border: 4px solid #fff; }
+        video { width: 100%; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); background: #000; outline: none; border: 4px solid #fff; object-fit: contain; }
         video:fullscreen { border: none; border-radius: 0; width: 100%; height: 100%; }
         canvas { display: none; }
         
@@ -136,6 +126,38 @@
         
         .preview-box { margin-top: 25px; padding: 20px; border: 3px dashed var(--pear-yellow); border-radius: 20px; display: none; background: #fffcf0; }
         .tip { font-size: 13px; color: #e67e22; margin-top: 12px; background: #fff3e0; padding: 12px; border-radius: 15px; border: none; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
+
+        /* ================= 录制时的全屏样式 (新增) ================= */
+        /* 当 body 拥有 recording-mode 类时 */
+        body.recording-mode {
+            overflow: hidden; background: #000; padding: 0;
+        }
+        body.recording-mode .container {
+            max-width: 100%; height: 100vh; border-radius: 0; border: none;
+            padding: 0; display: flex; flex-direction: column; justify-content: center;
+            background: #000;
+        }
+        body.recording-mode .header-banner, 
+        body.recording-mode h1,
+        body.recording-mode .step-label,
+        body.recording-mode select,
+        body.recording-mode #searchBtn,
+        body.recording-mode #playBtn,
+        body.recording-mode .tip,
+        body.recording-mode .status-text {
+            display: none !important;
+        }
+        body.recording-mode #video-container {
+            margin: 0; height: 100%; width: 100%; display: flex; 
+            align-items: center; justify-content: center; background: #000;
+        }
+        body.recording-mode #mainVideo {
+            max-height: 85vh; border: none; box-shadow: none; width: 100%;
+        }
+        body.recording-mode #actionBtn {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 60%; max-width: 200px; z-index: 1001;
+        }
 
         /* ================= 加载层 ================= */
         .loader-overlay {
@@ -205,7 +227,7 @@
         <p style="font-size:22px; color:#F9CA24;">微信内无法直接下载</p>
         <p>请点击右上角 <b>...</b></p>
         <p>选择 <b>"在浏览器打开"</b></p>
-        <p>即可正常保存视频</p>
+        <p>即可正常保存 MP4 视频</p>
         <br>
         <p style="font-size:14px; color:#aaa;">(点击任意处关闭提示)</p>
     </div>
@@ -213,6 +235,7 @@
 
 <div class="container">
     <div class="header-banner">
+        <!-- 请替换这里的图片链接 -->
         <img src="header.png" alt="Firstleap Elves" onerror="this.parentElement.style.background='#ddd'">
     </div>
 
@@ -236,6 +259,7 @@
             <div id="loadingText" style="color: #555; font-weight: bold;">加载中 Loading...</div>
         </div>
 
+        <!-- 关键修改：crossOrigin 必须存在，否则无法录制 -->
         <video id="mainVideo" playsinline controls controlsList="nodownload" crossOrigin="anonymous">
             <source src="" type="video/mp4">
             您的浏览器不支持视频标签。
@@ -259,7 +283,7 @@
         <!-- 结果视频 -->
         <video id="previewVideo" style="width:100%; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1); background:#000;" controls playsinline></video>
         
-        <!-- 新增：复制链接功能区 -->
+        <!-- 链接复制区域 -->
         <div id="linkBoxContainer" class="link-box-container">
             <span class="link-label">🔗 视频下载链接 (Video Link)</span>
             <div class="link-input-group">
@@ -273,14 +297,14 @@
 
         <div class="btn-group">
             <button class="btn btn-retry" onclick="resetRecording()">🔄 重录 Retry</button>
-            <a id="downloadLink" class="btn btn-download" onclick="handleDownloadClick(event)">💾 保存视频 Save</a>
+            <a id="downloadLink" class="btn btn-download" onclick="handleDownloadClick(event)">💾 保存视频 (Save MP4)</a>
         </div>
     </div>
 </div>
 
 <script>
     // ================= 数据配置区 =================
-    // (此处保留原有的 videoDatabase 数据，为节省篇幅省略，请确保保留完整的 videoDatabase)
+    // 请保留你完整的 videoDatabase 数据，这里仅为示例结构
     const videoDatabase = {
         "K2A": [
             "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763011941537284494.mp4", 
@@ -457,7 +481,6 @@
         const videoContainer = document.getElementById("video-container");
         const videoPlayer = document.getElementById("mainVideo");
         const loader = document.getElementById("loaderOverlay");
-        
         const actionBtn = document.getElementById("actionBtn");
         const playBtn = document.getElementById("playBtn"); 
 
@@ -469,7 +492,7 @@
         const url = videoDatabase[lvl][unitIndex];
         
         document.getElementById("resultArea").style.display = "none";
-        document.getElementById("linkBoxContainer").style.display = "none"; // 重置时隐藏链接框
+        document.getElementById("linkBoxContainer").style.display = "none";
         
         actionBtn.style.display = "none";
         actionBtn.className = "btn btn-record";
@@ -482,7 +505,6 @@
         
         videoPlayer.src = url;
         videoPlayer.load();
-        // 确保音量正常
         videoPlayer.volume = 1.0; 
 
         videoPlayer.onprogress = function() {
@@ -516,7 +538,7 @@
 
         videoPlayer.onerror = function() {
             loader.style.display = "none";
-            alert("视频加载失败。原因可能是网络问题或视频文件不允许跨域访问。");
+            alert("视频加载失败。原因可能是网络问题或跨域限制。\n如果视频无法加载，请联系管理员检查服务器CORS设置。");
             document.getElementById("statusText").innerText = "❌ 视频加载失败";
         };
         
@@ -536,7 +558,7 @@
 
     function resetRecording() {
         document.getElementById("resultArea").style.display = "none";
-        document.getElementById("linkBoxContainer").style.display = "none"; // 隐藏链接
+        document.getElementById("linkBoxContainer").style.display = "none";
         
         const actionBtn = document.getElementById("actionBtn");
         actionBtn.style.display = "block";
@@ -551,6 +573,9 @@
         mainVideo.currentTime = 0;
         mainVideo.pause();
         mainVideo.controls = true;
+        
+        // 退出全屏模式（以防万一）
+        exitFullscreenMode();
 
         const preview = document.getElementById("previewVideo");
         if(preview.src) {
@@ -563,17 +588,18 @@
 
     // ================= 核心录制逻辑 =================
 
+    // 优化：优先选择 MP4
     function getBestMimeType() {
         const types = [
-            "video/mp4;codecs=avc1",      // iOS Safari 14.8+ 偏好
-            "video/mp4",
-            "video/webm;codecs=h264",     // Chrome/Android 偏好
-            "video/webm;codecs=vp9",
-            "video/webm"
+            "video/mp4;codecs=avc1",      // iOS/Safari 优先
+            "video/mp4",                  // 尝试标准 MP4
+            "video/webm;codecs=h264",     // Chrome 带 H264
+            "video/webm;codecs=vp9",      // 高质量 WebM
+            "video/webm"                  // 通用 WebM
         ];
         for (const type of types) {
             if (MediaRecorder.isTypeSupported(type)) {
-                console.log("Browser supports:", type);
+                console.log("Using MIME type:", type);
                 return type;
             }
         }
@@ -631,10 +657,30 @@
                 text.innerText = "GO!";
                 setTimeout(() => {
                     overlay.style.display = 'none';
+                    enterFullscreenMode(); // 进入全屏
                     executeActualRecording();
                 }, 500);
             }
         }, 1000);
+    }
+
+    // 新增：进入全屏模式
+    function enterFullscreenMode() {
+        document.body.classList.add('recording-mode');
+        // 尝试浏览器原生全屏
+        const docElm = document.documentElement;
+        if (docElm.requestFullscreen) { docElm.requestFullscreen().catch(e=>{}); }
+        else if (docElm.mozRequestFullScreen) { docElm.mozRequestFullScreen().catch(e=>{}); }
+        else if (docElm.webkitRequestFullScreen) { docElm.webkitRequestFullScreen().catch(e=>{}); }
+    }
+
+    // 新增：退出全屏模式
+    function exitFullscreenMode() {
+        document.body.classList.remove('recording-mode');
+        // 退出原生全屏
+        if (document.exitFullscreen) { document.exitFullscreen().catch(e=>{}); }
+        else if (document.mozCancelFullScreen) { document.mozCancelFullScreen().catch(e=>{}); }
+        else if (document.webkitCancelFullScreen) { document.webkitCancelFullScreen().catch(e=>{}); }
     }
 
     async function executeActualRecording() {
@@ -664,7 +710,6 @@
             return; 
         }
 
-        // 限制 Canvas 分辨率
         const MAX_WIDTH = 1280;
         let w = video.videoWidth;
         let h = video.videoHeight;
@@ -704,14 +749,14 @@
             canvasStream = canvas.captureStream(30); 
         } catch(e) {
              console.error(e);
-             alert("您的浏览器不支持 Canvas 录制，请尝试使用 Chrome。");
+             alert("您的浏览器不支持 Canvas 录制。");
              stopRecording();
              return;
         }
 
         const mixedAudioTrack = dest.stream.getAudioTracks()[0];
         if (!mixedAudioTrack || canvasStream.getVideoTracks().length === 0) {
-             alert("无法获取音视频流");
+             alert("无法获取音视频流，请确保允许权限");
              stopRecording();
              return;
         }
@@ -723,7 +768,7 @@
 
         recordedMimeType = getBestMimeType();
         if (!recordedMimeType) {
-            alert("您的设备暂不支持网页录制，请使用电脑版 Chrome 访问。");
+            alert("您的设备暂不支持网页录制，请使用 Chrome 或 Safari。");
             stopRecording();
             return;
         }
@@ -731,7 +776,7 @@
         try {
             mediaRecorder = new MediaRecorder(combinedStream, { 
                 mimeType: recordedMimeType, 
-                videoBitsPerSecond: 1500000 
+                videoBitsPerSecond: 2500000 // 提高一点码率保证清晰度
             });
         } catch (e) {
             console.error("Recorder init fail:", e);
@@ -757,10 +802,11 @@
         mediaRecorder.start(1000); 
         
         document.getElementById("playBtn").style.display = "none"; 
-        actionBtn.innerHTML = "⏹️ 完成配音";
+        actionBtn.innerHTML = "⏹️ 完成配音 (Stop)";
         actionBtn.className = "btn btn-stop";
         
-        status.innerText = "🎙️ 录制中... (背景音已自动压低)";
+        // 录制时不显示状态文字，以免遮挡，或者简单显示
+        status.innerText = "🔴 录制中 (Recording)...";
         status.style.color = "#FF0000";
         
         video.onended = stopRecording; 
@@ -779,7 +825,9 @@
         } catch (e) { 
             console.error("Canvas Draw Error:", e);
             isRecording = false;
-            alert("录制中断：视频源不允许跨域录制。请联系管理员配置 CORS 策略。");
+            // 退出全屏方便看错误
+            exitFullscreenMode();
+            alert("录制中断：跨域限制(CORS)。请联系管理员给视频服务器添加 'Access-Control-Allow-Origin: *' 头。");
             stopRecording();
             return;
         }
@@ -791,6 +839,9 @@
         if (!isRecording) return;
         isRecording = false;
         cancelAnimationFrame(animationFrameId);
+
+        // 退出全屏
+        exitFullscreenMode();
 
         const video = document.getElementById("mainVideo");
         const actionBtn = document.getElementById("actionBtn");
@@ -846,6 +897,7 @@
             return;
         }
 
+        // 强制检查类型
         let type = recordedMimeType || 'video/webm';
         const blob = new Blob(recordedChunks, { type: type });
         const url = URL.createObjectURL(blob);
@@ -853,31 +905,24 @@
         const preview = document.getElementById("previewVideo");
         preview.src = url;
         
-        let ext = ".webm";
-        if (type.includes("mp4")) {
-            ext = ".mp4";
-        }
+        // 强制把下载后缀名为 .mp4，即使内部编码可能是 WebM
+        // 大多数现代播放器和微信能识别这种"伪"MP4
+        let filename = `Firstleap_Voice_${Date.now()}.mp4`;
 
-        const date = new Date();
-        const filename = `Firstleap_Voice_${date.getTime()}${ext}`;
         const downloadBtn = document.getElementById("downloadLink");
         
         downloadBtn.href = url;
         downloadBtn.download = filename;
 
-        // ====== 新增：生成链接并显示 ======
         const linkContainer = document.getElementById("linkBoxContainer");
         const linkInput = document.getElementById("videoLinkInput");
         
         if (isWeChat()) {
-            // 在微信中，直接显示当前页面地址，方便复制
             linkInput.value = window.location.href;
         } else {
-            // 在普通浏览器中，显示 Blob 地址（虽然也没法分享，但符合请求）
             linkInput.value = url; 
         }
         linkContainer.style.display = "block";
-        // ================================
         
         document.getElementById("actionBtn").style.display = "none";
         
@@ -893,18 +938,17 @@
     }
 
     function handleDownloadClick(event) {
+        // 微信内拦截下载点击
         if (isWeChat()) {
             event.preventDefault();
             document.getElementById("wechat-tip-overlay").style.display = "block";
         }
     }
 
-    // 新增：复制链接逻辑
     function copyVideoLink() {
         const linkInput = document.getElementById("videoLinkInput");
         const urlToCopy = linkInput.value;
         
-        // 优先尝试 navigator.clipboard
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(urlToCopy).then(() => {
                 handleCopySuccess();
@@ -918,7 +962,7 @@
 
     function fallbackCopyText(inputElement) {
         inputElement.select();
-        inputElement.setSelectionRange(0, 99999); // For mobile devices
+        inputElement.setSelectionRange(0, 99999);
         try {
             document.execCommand('copy');
             handleCopySuccess();
@@ -929,7 +973,7 @@
 
     function handleCopySuccess() {
         if (isWeChat()) {
-            alert("✅ 页面链接已复制！\n由于微信限制，请打开 浏览器 (Safari/Chrome) \n粘贴链接后重新录制即可直接下载视频。");
+            alert("✅ 页面链接已复制！\n由于微信限制，请打开 浏览器 (Safari/Chrome) \n粘贴链接后重新录制即可直接下载 MP4。");
         } else {
             alert("✅ 链接已复制！\n注意：此链接为本地临时链接，关闭页面后将失效。");
         }
