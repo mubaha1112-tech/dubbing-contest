@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>励步-奇声妙想 Firstleap Voice Magic</title>
+    <style>
+        /* ================= 时尚可爱风格样式 ================= */
+        :root {
+            --bg-cream: #F9F6E8; /* 图片背景奶黄色 */
+            --card-white: #ffffff;
+            --monster-green: #7BC043; /* 左侧怪兽绿 */
+            --rabbit-pink: #FF8E8E; /* 中间兔子粉 */
+            --rabbit-red: #EE5253; /* 中间兔子红 */
+            --pear-yellow: #F9CA24; /* 右侧梨子黄 */
+            --text-dark: #2d3436;
+            --shadow-soft: 0 10px 30px rgba(249, 202, 36, 0.15);
+            --shadow-3d: 0 6px 0 rgba(0,0,0,0.1);
+        }
+
+        body { 
+            font-family: "Chalkboard SE", "Comic Sans MS", -apple-system, BlinkMacSystemFont, sans-serif; 
+            background-color: var(--bg-cream);
+            margin: 0; 
+            padding: 20px 10px; 
+            text-align: center; 
+            color: var(--text-dark);
+        }
+        
+        .container { 
+            background: var(--card-white); 
+            padding: 25px 20px; 
+            border-radius: 30px; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.08); 
+            max-width: 600px; 
+            margin: 0 auto; 
+            position: relative; 
+            border: 5px solid #fff;
+        }
+
+        /* === 头部精灵图区域 === */
+        .header-banner {
+            width: 100%;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            /* 这里是为了让图片看起来像融入了设计 */
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
+        }
+        
+        .header-banner img {
+            width: 100%;
+            height: auto;
+            display: block;
+            /* 如果图片有背景色，这会让它更好地融合 */
+            mix-blend-mode: multiply; 
+        }
+
+        h1 { 
+            color: var(--rabbit-red); 
+            font-size: 26px; 
+            margin: 10px 0 25px; 
+            text-shadow: 2px 2px 0px #ffe3e3;
+            font-weight: 900;
+            letter-spacing: 1px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        /* 装饰性的小元素 */
+        h1::after {
+            content: "✨";
+            position: absolute;
+            right: -25px;
+            top: 0;
+            font-size: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        h1::before {
+            content: "🎵";
+            position: absolute;
+            left: -25px;
+            top: 10px;
+            font-size: 20px;
+            animation: bounce 2s infinite reverse;
+        }
+
+        /* ================= 控件样式 ================= */
+        .step-label {
+            text-align: left;
+            margin: 15px 0 5px 5px;
+            font-weight: bold;
+            color: #888;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .step-badge {
+            background: var(--pear-yellow);
+            color: #fff;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-size: 12px;
+        }
+
+        select { 
+            width: 100%; 
+            padding: 14px; 
+            margin-bottom: 10px; 
+            border: 2px solid #eee; 
+            border-radius: 18px; 
+            font-size: 16px; 
+            background: #fafafa; 
+            outline: none;
+            transition: 0.3s;
+            color: #555;
+            font-weight: bold;
+            -webkit-appearance: none; /* 去除默认样式 */
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF9966' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            background-size: 18px;
+        }
+
+        select:focus {
+            border-color: var(--pear-yellow);
+            background-color: #fff;
+        }
+        
+        .btn { 
+            display: block; 
+            width: 100%; 
+            padding: 16px; 
+            border: none; 
+            border-radius: 25px; 
+            font-size: 18px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            color: white; 
+            margin-top: 15px; 
+            transition: all 0.2s;
+            box-shadow: var(--shadow-3d);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn:active { 
+            transform: translateY(4px); 
+            box-shadow: 0 2px 0 rgba(0,0,0,0.1); 
+        }
+        .btn:disabled { 
+            background: #e0e0e0; 
+            color: #aaa;
+            cursor: not-allowed; 
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* 搜索按钮 - 对应怪兽绿色 */
+        .btn-primary { background: linear-gradient(135deg, #a8e063 0%, #56ab2f 100%); } 
+        
+        /* 预览按钮 - 对应梨子黄色 */
+        .btn-play { background: linear-gradient(135deg, #fce38a 0%, #f38181 100%); display: none; margin-bottom: 10px; color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,0.1); }
+        
+        /* 录音按钮 - 对应兔子红色 */
+        .btn-record { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); background: linear-gradient(to right, #ff5f6d, #ffc371); display: none; }
+        
+        /* 停止按钮 - 脉冲动画 */
+        .btn-stop { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); display: none; animation: pulse 1.5s infinite; }
+        
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .btn-download { 
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
+            text-decoration: none; 
+            line-height: 1.5; 
+            flex: 1; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-retry {
+            background: #dfe6e9;
+            color: #636e72;
+            box-shadow: 0 4px 0 #b2bec3;
+            flex: 1; 
+        }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+        /* ================= 视频区域 ================= */
+        #video-container { margin-top: 25px; display: none; position: relative; min-height: 200px; }
+        
+        video { 
+            width: 100%; 
+            border-radius: 20px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15); 
+            background: #000; 
+            outline: none; 
+            border: 4px solid #fff;
+        }
+        
+        canvas { display: none; }
+        
+        .status-text { margin-top: 15px; font-weight: bold; color: var(--rabbit-red); min-height: 24px; font-size: 15px; }
+        
+        .preview-box { 
+            margin-top: 25px; 
+            padding: 20px; 
+            border: 3px dashed var(--pear-yellow); 
+            border-radius: 20px; 
+            display: none; 
+            background: #fffcf0; 
+        }
+
+        .tip { 
+            font-size: 13px; 
+            color: #e67e22; 
+            margin-top: 12px; 
+            background: #fff3e0; 
+            padding: 12px; 
+            border-radius: 15px; 
+            border: none;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+        }
+
+        .loader-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.9); z-index: 10;
+            display: none; align-items: center; justify-content: center; flex-direction: column;
+            border-radius: 20px;
+            backdrop-filter: blur(3px);
+        }
+        .spinner { border: 5px solid #f3f3f3; border-top: 5px solid var(--rabbit-red); border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 这里放置你的图片，请将 src 修改为你保存的图片路径 -->
+    <div class="header-banner">
+        <!-- ⚠️ 重要：请将下方src替换为你上传的那张精灵图片的路径/文件名 -->
+        <img src="header.png" alt="Firstleap Elves" onerror="this.style.display='none'">
+    </div>
+
+    <h1>Firstleap Voice Magic<br><span style="font-size:18px; color:#888; font-weight:normal;">奇声妙想配音秀</span></h1>
+    
+    <div class="step-label"><span class="step-badge">1</span>选择级别</div>
+    <select id="levelSelect" onchange="updateUnits()">
+        <option value="">请选择级别 (Level)</option>
+    </select>
+
+    <div class="step-label"><span class="step-badge">2</span>选择单元</div>
+    <select id="unitSelect" disabled>
+        <option value="">请先选择级别</option>
+    </select>
+
+    <button class="btn btn-primary" id="searchBtn" onclick="findVideo()">🎬 查找视频 Find Video</button>
+
+    <div id="video-container">
+        <div id="loaderOverlay" class="loader-overlay">
+            <div class="spinner"></div>
+            <div id="loadingText" style="color: #555; font-weight: bold;">加载中 Loading...</div>
+        </div>
+
+        <video id="mainVideo" playsinline controls controlsList="nodownload" crossOrigin="anonymous">
+            <source src="" type="video/mp4">
+            您的浏览器不支持视频标签。
+        </video>
+        
+        <div class="tip">🎧 <b>温馨提示：</b>配音前请务必佩戴耳机，以防回声啸叫！</div>
+        <div class="status-text" id="statusText"></div>
+
+        <!-- 播放控制按钮 -->
+        <button class="btn btn-play" id="playBtn" onclick="togglePreview()">▶️ 预览原片 Preview</button>
+
+        <button class="btn btn-record" id="recordBtn" onclick="startRecording()">🎙️ 准备就绪，开始配音</button>
+        <button class="btn btn-stop" id="stopBtn" onclick="stopRecording()">⏹️ 完成配音，生成视频</button>
+        
+        <canvas id="processCanvas"></canvas>
+    </div>
+
+    <!-- 结果区域 -->
+    <div id="resultArea" class="preview-box">
+        <h3 style="color:var(--rabbit-red); margin-top:0;">🎉 配音完成！Amazing!</h3>
+        <p style="font-size:12px; color:#999; margin-bottom:15px;">如果听不到声音，请检查手机静音键</p>
+        
+        <video id="previewVideo" style="width:100%; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1); background:#000;" controls playsinline></video>
+        
+        <!-- 双按钮区域 -->
+        <div class="btn-group">
+            <button class="btn btn-retry" onclick="resetRecording()">🔄 重录 Retry</button>
+            <a id="downloadLink" class="btn btn-download">💾 保存视频 Save</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ================= 数据配置区 (保持原样) =================
+    const videoDatabase = {
+        "K2A": [
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763011941537284494.mp4", 
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763011945233cae631.mp4", 
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/17630119516450a277c.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763012048115b61f0f.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/2b63bb6d3c08490db6dd9d2b4fe656d7/teacher-homework/1763012051505623f0e.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/cc581b40f6b342ab8766ecb497b0593c/teacher-homework/17630120579742d4c02.mp4",
+            "", "", "" 
+        ],
+        "K2B": [
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/75c7beb9392e4cf9960c6eede634c52c/teacher-homework/17630120691122d5403.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/19d99dbee57a4f91a48ce6ce7bb974b4/teacher-homework/1763012082809a8b161.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/6ca4b573c3a74e009339b0d119d2c6b2/teacher-homework/17630121046921c4cc5.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/176301780297880646f.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/17630178108970b8c1a.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/176301781737859c176.mp4",
+            "", "", ""
+        ],
+        "K3A": [
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/17630178328878ac20f.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/87f8ebf82ac44720a8ed695edc81d7db/teacher-homework/17630178426408a59d8.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/06f5c3edcb4d4d87ad1b0cd1d2993d27/teacher-homework/17630178665677d79d3.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/1764160538592e2c49d.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/63972810b527498d9402d45faea7bf43/teacher-homework/17630179827650c9812.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/00a0f094ef8244389261d996abd604b4/teacher-homework/1763017985597814ea5.mp4",
+            "", "", ""
+        ],
+        "K3B": [
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763018186532db70f3.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/176301818877214d863.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763018191225723509.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763018193813bf765d.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763018196433b9f19e.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763018210633b0c5c5.mp4",
+            "", "", ""
+        ],
+        "G0": [
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/17630182202811ca8fd.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763018228073dedc05.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763018230212beeb84.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763018576703e8a76d.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763018581832b7e3ea.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763018585472d3a0b3.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763018589064cbe157.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763018591548a9cde4.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/17630186018727ef726.mp4"
+        ],
+        "G1A": [
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763020933347b4721b.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/176302093584897e05c.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/1764158748310d16322.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/813136336eb34eb9a086f0e4c74fad8f/teacher-homework/1764158754953d7e3aa.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/c693f13409b0418aa30b61775fb667f2/teacher-homework/176415875781008bc3f.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/efe922c6dad3478194454c6f20e83594/teacher-homework/176415876014857f8ce.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/1764161806814c6027c.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/620f34d23da24485b7b3ebecf0d49715/teacher-homework/1764161810873e2ec8d.mp4", 
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/61ec2562d76343898d1a4d622dfe53ba/teacher-homework/1764158765004679961.mp4"
+        ],
+        "G1B": [
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763021337298aae2a8.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/176302134040302afa2.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763021343327574ffe.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763021345500e16489.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763021348021750704.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763023453394e0d4dd.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/176302135256081bc9e.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763021362061eb0385.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763021363940857b8e.mp4"
+        ],
+        "G2A": [
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/1764160519134278b5d.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/1764160529270565a19.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/9083ce4b5f4242bdac85816e04e0bc56/teacher-homework/1763021929116e2169c.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/9af16032c9154a31bf2a95b3b15d1025/teacher-homework/176302193109956c2ed.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/51ae315a5c2b4260ba674f0dd1bdf11f/teacher-homework/17641618194078a0e28.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/1764160535355cf6285.mp4",
+            ""
+        ],
+        "G2B": [
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/c273f4a79c2845a59ed38b42b95f07c9/teacher-homework/1763022250827a260c7.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/2d998f0708574253aa892ba9d2ad0aea/teacher-homework/17630222531960ecf7c.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/17630222556756ffc34.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/176302225764940fec6.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/1764157788986ab1382.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/1764157791475e09b7e.mp4",
+            "", "", ""
+        ],
+        "G3A": [
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/1764160084181f102c7.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/4402ca889ef3400b839ef84cb23d12d3/teacher-homework/1763022952100285191.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/1764160086821b8d9e2.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/fdceaef6e31e4c638822a048c10725f8/teacher-homework/1764160089326b7fb73.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/17641600922812b7bff.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/a8c7a19a8cba42edaf6986b94969b197/teacher-homework/176416009474092babe.mp4",
+            "", "", ""
+        ],
+        "G3B": [
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/176302346811779ef05.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/176302347129269b324.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763023473567337000.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763023475693e477da.mp4",
+            "", "", "", "", ""
+        ],
+        "G4A": [
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/c03eed96e6704a3f9e2e69aa87c5d129/teacher-homework/1763023607589e0edf8.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/eddede32bb134a7b9b459da4a265cb3d/teacher-homework/176302361198451fd60.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/058ccf2fb9b44db9b36af29fa2a3d049/teacher-homework/1763023619529830ebc.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/b2f0f75f1b734391a001882ca73c60cb/teacher-homework/17630236219657ae294.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/1764158042333492fc3.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763023992804c614a5.mp4",
+            "", "", ""
+        ],
+        "G4B": [
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/ea4be2c59c024dea923d9806e1f7250a/teacher-homework/176302071175214eb09.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/f5abe75bd2ba4a03aecc16901b13e497/teacher-homework/1763020714062726936.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/7a60f558b9ac4428b9aa08f196cdbc20/teacher-homework/17630207163663000fa.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/febd1d55be274f3e911b4cc9aa9d7f88/teacher-homework/176302072522770462f.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/22a7ca3d786c495c96226e04473035cd/teacher-homework/176302072735125fd25.mp4",
+            "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/9c4b0954c98c4568a47cd7078e27cc6f/teacher-homework/176302072937414367d.mp4",
+            "", "", ""
+        ]
+    };
+
+    // ================= 变量区 =================
+    let mediaRecorder;
+    let recordedChunks = [];
+    let audioCtx = null;
+    let micStream = null;
+    let canvasStream = null;
+    let sourceVideo = null;
+    let sourceMic = null;
+    let dest = null;
+    let micGainNode = null;   
+    let videoGainNode = null; 
+    let isRecording = false;
+
+    // ================= 逻辑区 =================
+    // 动态生成级别选项
+    const levels = Object.keys(videoDatabase);
+    const levelSelect = document.getElementById("levelSelect");
+    levels.forEach(lvl => {
+        let option = document.createElement("option");
+        option.value = lvl;
+        option.text = lvl;
+        levelSelect.appendChild(option);
+    });
+
+    function updateUnits() {
+        const lvl = document.getElementById("levelSelect").value;
+        const unitSelect = document.getElementById("unitSelect");
+        unitSelect.innerHTML = '<option value="">-- 请选择单元 (Unit) --</option>';
+        unitSelect.disabled = true;
+        
+        if (lvl && videoDatabase[lvl]) {
+            let hasUnits = false;
+            for (let i = 0; i < videoDatabase[lvl].length; i++) {
+                 if (videoDatabase[lvl][i] && videoDatabase[lvl][i] !== "") {
+                     let option = document.createElement("option");
+                     option.value = i;
+                     option.text = "Unit " + (i + 1);
+                     unitSelect.appendChild(option);
+                     hasUnits = true;
+                 }
+            }
+            if(hasUnits) unitSelect.disabled = false;
+        }
+    }
+
+    function findVideo() {
+        const lvl = document.getElementById("levelSelect").value;
+        const unitIndex = document.getElementById("unitSelect").value;
+        const videoContainer = document.getElementById("video-container");
+        const videoPlayer = document.getElementById("mainVideo");
+        const loader = document.getElementById("loaderOverlay");
+        const recordBtn = document.getElementById("recordBtn");
+        const playBtn = document.getElementById("playBtn"); 
+
+        if (!lvl || unitIndex === "") {
+            alert("请先选择级别和单元！");
+            return;
+        }
+
+        const url = videoDatabase[lvl][unitIndex];
+        
+        document.getElementById("resultArea").style.display = "none";
+        document.getElementById("stopBtn").style.display = "none";
+        recordBtn.style.display = "none";
+        playBtn.style.display = "none"; 
+        
+        videoContainer.style.display = "block";
+        loader.style.display = "flex";
+        
+        videoPlayer.src = url;
+        videoPlayer.load();
+
+        // 默认开启 controls，允许拖动
+        videoPlayer.controls = true;
+
+        videoPlayer.onprogress = function() {
+            if (videoPlayer.buffered.length > 0) {
+                const duration = videoPlayer.duration;
+                const buffered = videoPlayer.buffered.end(0);
+                if (duration > 0) {
+                    const percent = Math.min(100, Math.floor((buffered / duration) * 100));
+                    document.getElementById("loadingText").innerText = "视频缓冲中 " + percent + "%";
+                }
+            }
+        };
+
+        videoPlayer.oncanplaythrough = function() {
+            loader.style.display = "none";
+            recordBtn.style.display = "block";
+            playBtn.style.display = "block"; 
+            document.getElementById("statusText").innerText = "✅ 视频加载完毕，可先预览，或直接配音";
+        };
+
+        // 监听视频自然结束
+        videoPlayer.onended = function() {
+            if(!isRecording) {
+                playBtn.innerHTML = "▶️ 预览原片 Preview";
+            }
+        };
+
+        // 新增：监听原生控件的播放暂停，同步更新自定义按钮文字
+        videoPlayer.onplay = function() {
+            if (!isRecording) {
+                playBtn.innerHTML = "⏸️ 暂停播放 Pause";
+            }
+        };
+        videoPlayer.onpause = function() {
+            if (!isRecording) {
+                playBtn.innerHTML = "▶️ 预览原片 Preview";
+            }
+        };
+
+        videoPlayer.onerror = function() {
+            loader.style.display = "none";
+            alert("视频加载失败或禁止跨域，请联系管理员。");
+            document.getElementById("statusText").innerText = "❌ 视频加载失败";
+        };
+        
+        videoContainer.scrollIntoView({behavior: "smooth"});
+    }
+
+    // ================= 预览/暂停功能 =================
+    function togglePreview() {
+        const video = document.getElementById("mainVideo");
+        // 点击按钮时仅切换状态，具体文字更新交给 onplay/onpause 监听器
+        if (video.paused) {
+            video.volume = 1.0; 
+            video.muted = false;
+            video.play();
+        } else {
+            video.pause();
+        }
+    }
+
+    // ================= 重录功能 =================
+    function resetRecording() {
+        document.getElementById("resultArea").style.display = "none";
+        document.getElementById("recordBtn").style.display = "block";
+        document.getElementById("playBtn").style.display = "block"; 
+        document.getElementById("playBtn").innerHTML = "▶️ 预览原片 Preview";
+        document.getElementById("statusText").innerText = "🔄 已重置，请点击按钮再次配音";
+        
+        const mainVideo = document.getElementById("mainVideo");
+        mainVideo.currentTime = 0;
+        mainVideo.pause();
+        // 恢复控件
+        mainVideo.controls = true;
+
+        const preview = document.getElementById("previewVideo");
+        if(preview.src) {
+            URL.revokeObjectURL(preview.src);
+            preview.src = "";
+        }
+        
+        document.getElementById("video-container").scrollIntoView({behavior: "smooth"});
+    }
+
+    // ================= 核心混音录制逻辑 =================
+
+    async function startRecording() {
+        const video = document.getElementById("mainVideo");
+        const canvas = document.getElementById("processCanvas");
+        const ctx = canvas.getContext("2d");
+        const status = document.getElementById("statusText");
+        const playBtn = document.getElementById("playBtn");
+
+        if (video.readyState < 3) {
+            alert("视频尚未加载完成");
+            return;
+        }
+
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+        } catch (e) {
+            alert("您的浏览器不支持 Web Audio API");
+            return;
+        }
+
+        try {
+            micStream = await navigator.mediaDevices.getUserMedia({ 
+                audio: { 
+                    echoCancellation: true, 
+                    noiseSuppression: true,
+                    autoGainControl: true 
+                } 
+            });
+        } catch (err) {
+            alert("无法获取麦克风权限！请在浏览器设置中允许。");
+            return;
+        }
+
+        // === 关键逻辑：开始录音前，重置视频到开头 ===
+        video.pause();
+        video.currentTime = 0;
+        video.muted = false; 
+        video.volume = 1.0; 
+        
+        // 【关键修改】录音时隐藏原生控件，禁止拖动进度条
+        video.controls = false;
+        
+        playBtn.innerHTML = "▶️ 预览原片 Preview"; 
+        
+        try {
+            await video.play();
+        } catch (e) {
+            alert("自动播放失败，请手动播放后重试");
+            video.controls = true; // 失败则恢复控件
+            return;
+        }
+        
+        dest = audioCtx.createMediaStreamDestination();
+        micGainNode = audioCtx.createGain();
+        videoGainNode = audioCtx.createGain();
+
+        // 麦克风放大，背景音压低
+        micGainNode.gain.value = 2.0; 
+        videoGainNode.gain.value = 0.3; 
+
+        sourceMic = audioCtx.createMediaStreamSource(micStream);
+        sourceMic.connect(micGainNode);
+        micGainNode.connect(dest);
+
+        try {
+            if (!video._audioSourceNode) {
+                sourceVideo = audioCtx.createMediaElementSource(video);
+                video._audioSourceNode = sourceVideo;
+            } else {
+                sourceVideo = video._audioSourceNode;
+            }
+            sourceVideo.connect(videoGainNode);
+            videoGainNode.connect(dest);
+            sourceVideo.connect(audioCtx.destination); 
+        } catch (e) {
+            console.error(e);
+        }
+
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 360;
+        canvasStream = canvas.captureStream(30);
+
+        const mixedAudioTrack = dest.stream.getAudioTracks()[0];
+        const combinedStream = new MediaStream([
+            canvasStream.getVideoTracks()[0],
+            mixedAudioTrack
+        ]);
+
+        const mimeTypes = ['video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'];
+        let selectedMime = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || '';
+
+        try {
+            mediaRecorder = new MediaRecorder(combinedStream, { mimeType: selectedMime, videoBitsPerSecond: 2500000 });
+        } catch (e) {
+            mediaRecorder = new MediaRecorder(combinedStream);
+        }
+
+        recordedChunks = [];
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+        mediaRecorder.onstop = exportVideo;
+
+        isRecording = true;
+        drawToCanvas(video, ctx, canvas);
+        mediaRecorder.start();
+        
+        document.getElementById("recordBtn").style.display = "none";
+        document.getElementById("playBtn").style.display = "none"; 
+        document.getElementById("stopBtn").style.display = "block";
+        status.innerText = "🎙️ 录制中... (背景音已自动压低)";
+        status.style.color = "#FF0000";
+        
+        video.onended = stopRecording; 
+    }
+
+    function drawToCanvas(video, ctx, canvas) {
+        if (!isRecording) return;
+        try {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            requestAnimationFrame(() => drawToCanvas(video, ctx, canvas));
+        } catch (e) {
+            stopRecording();
+        }
+    }
+
+    function stopRecording() {
+        if (!isRecording) return;
+        isRecording = false;
+
+        const video = document.getElementById("mainVideo");
+        video.pause();
+        
+        // 【关键修改】停止录音后，恢复控件，允许拖拽回看
+        video.controls = true;
+
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop();
+        }
+
+        if (micStream) micStream.getTracks().forEach(track => track.stop());
+        if (canvasStream) canvasStream.getTracks().forEach(track => track.stop());
+        
+        if (audioCtx && audioCtx.state !== 'closed') {
+            audioCtx.suspend(); 
+        }
+
+        document.getElementById("recordBtn").style.display = "block";
+        document.getElementById("stopBtn").style.display = "none";
+        document.getElementById("statusText").innerText = "⚡ 正在合成配音视频...";
+        document.getElementById("statusText").style.color = "var(--pear-yellow)";
+    }
+
+    function exportVideo() {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const preview = document.getElementById("previewVideo");
+        preview.src = url;
+        
+        const date = new Date();
+        const filename = `Firstleap_Dubbing_${date.getTime()}.webm`;
+        const downloadBtn = document.getElementById("downloadLink");
+        downloadBtn.href = url;
+        downloadBtn.download = filename;
+        
+        document.getElementById("resultArea").style.display = "block";
+        document.getElementById("statusText").innerText = "✨ 制作成功！Excellent!";
+        
+        document.getElementById("resultArea").scrollIntoView({behavior: "smooth"});
+    }
+</script>
+
+</body>
+</html>
