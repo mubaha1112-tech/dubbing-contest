@@ -7,12 +7,12 @@
     <style>
         /* ================= 时尚可爱风格样式 ================= */
         :root {
-            --bg-cream: #F9F6E8; /* 图片背景奶黄色 */
+            --bg-cream: #F9F6E8;
             --card-white: #ffffff;
-            --monster-green: #7BC043; /* 左侧怪兽绿 */
-            --rabbit-pink: #FF8E8E; /* 中间兔子粉 */
-            --rabbit-red: #EE5253; /* 中间兔子红 */
-            --pear-yellow: #F9CA24; /* 右侧梨子黄 */
+            --monster-green: #7BC043;
+            --rabbit-pink: #FF8E8E;
+            --rabbit-red: #EE5253;
+            --pear-yellow: #F9CA24;
             --text-dark: #2d3436;
             --shadow-soft: 0 10px 30px rgba(249, 202, 36, 0.15);
             --shadow-3d: 0 6px 0 rgba(0,0,0,0.1);
@@ -38,7 +38,7 @@
             border: 5px solid #fff;
         }
 
-        /* === 头部精灵图区域 === */
+        /* === 头部样式 === */
         .header-banner {
             width: 100%;
             border-radius: 20px;
@@ -46,7 +46,6 @@
             overflow: hidden;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
         }
-        
         .header-banner img {
             width: 100%;
             height: auto;
@@ -64,241 +63,129 @@
             position: relative;
             display: inline-block;
         }
-        
-        h1::after {
-            content: "✨";
-            position: absolute;
-            right: -25px;
-            top: 0;
-            font-size: 20px;
-            animation: bounce 2s infinite;
-        }
-
-        h1::before {
-            content: "🎵";
-            position: absolute;
-            left: -25px;
-            top: 10px;
-            font-size: 20px;
-            animation: bounce 2s infinite reverse;
-        }
+        h1::after { content: "✨"; position: absolute; right: -25px; top: 0; font-size: 20px; animation: bounce 2s infinite; }
+        h1::before { content: "🎵"; position: absolute; left: -25px; top: 10px; font-size: 20px; animation: bounce 2s infinite reverse; }
 
         /* ================= 控件样式 ================= */
-        .step-label {
-            text-align: left;
-            margin: 15px 0 5px 5px;
-            font-weight: bold;
-            color: #888;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .step-badge {
-            background: var(--pear-yellow);
-            color: #fff;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 8px;
-            font-size: 12px;
-        }
+        .step-label { text-align: left; margin: 15px 0 5px 5px; font-weight: bold; color: #888; font-size: 14px; display: flex; align-items: center; }
+        .step-badge { background: var(--pear-yellow); color: #fff; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; font-size: 12px; }
 
         select { 
-            width: 100%; 
-            padding: 14px; 
-            margin-bottom: 10px; 
-            border: 2px solid #eee; 
-            border-radius: 18px; 
-            font-size: 16px; 
-            background: #fafafa; 
-            outline: none;
-            transition: 0.3s;
-            color: #555;
-            font-weight: bold;
+            width: 100%; padding: 14px; margin-bottom: 10px; border: 2px solid #eee; border-radius: 18px; 
+            font-size: 16px; background: #fafafa; outline: none; transition: 0.3s; color: #555; font-weight: bold;
             -webkit-appearance: none;
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF9966' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 15px center;
-            background-size: 18px;
+            background-repeat: no-repeat; background-position: right 15px center; background-size: 18px;
         }
-
-        select:focus {
-            border-color: var(--pear-yellow);
-            background-color: #fff;
-        }
+        select:focus { border-color: var(--pear-yellow); background-color: #fff; }
         
         .btn { 
-            display: block; 
-            width: 100%; 
-            padding: 16px; 
-            border: none; 
-            border-radius: 25px; 
-            font-size: 18px; 
-            font-weight: 800; 
-            cursor: pointer; 
-            color: white; 
-            margin-top: 15px; 
-            transition: all 0.2s;
-            box-shadow: var(--shadow-3d);
-            position: relative;
-            overflow: hidden;
+            display: block; width: 100%; padding: 16px; border: none; border-radius: 25px; 
+            font-size: 18px; font-weight: 800; cursor: pointer; color: white; margin-top: 15px; 
+            transition: all 0.2s; box-shadow: var(--shadow-3d); position: relative; overflow: hidden;
         }
-        
-        .btn:active { 
-            transform: translateY(4px); 
-            box-shadow: 0 2px 0 rgba(0,0,0,0.1); 
-        }
-        .btn:disabled { 
-            background: #e0e0e0; 
-            color: #aaa;
-            cursor: not-allowed; 
-            box-shadow: none;
-            transform: none;
-        }
+        .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.1); }
+        .btn:disabled { background: #e0e0e0; color: #aaa; cursor: not-allowed; box-shadow: none; transform: none; }
 
-        /* 按钮颜色定义 */
         .btn-primary { background: linear-gradient(135deg, #a8e063 0%, #56ab2f 100%); } 
         .btn-play { background: linear-gradient(135deg, #fce38a 0%, #f38181 100%); display: none; margin-bottom: 10px; color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,0.1); }
-        .btn-record { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); background: linear-gradient(to right, #ff5f6d, #ffc371); display: none; }
+        .btn-record { background: linear-gradient(to right, #ff5f6d, #ffc371); display: none; }
         .btn-stop { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); display: none; animation: pulse 1.5s infinite; }
         
-        .btn-group {
-            display: flex;
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .btn-download { 
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); 
-            text-decoration: none; 
-            line-height: 1.5; 
-            flex: 1; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-retry {
-            background: #dfe6e9;
-            color: #636e72;
-            box-shadow: 0 4px 0 #b2bec3;
-            flex: 1; 
-        }
+        .btn-group { display: flex; gap: 15px; margin-top: 15px; }
+        .btn-download { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); text-decoration: none; line-height: 1.5; flex: 1; display: flex; align-items: center; justify-content: center; }
+        .btn-retry { background: #dfe6e9; color: #636e72; box-shadow: 0 4px 0 #b2bec3; flex: 1; }
 
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
         /* ================= 视频区域 ================= */
         #video-container { margin-top: 25px; display: none; position: relative; min-height: 200px; }
-        
-        video { 
-            width: 100%; 
-            border-radius: 20px; 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15); 
-            background: #000; 
-            outline: none; 
-            border: 4px solid #fff;
-        }
-        
-        /* 全屏时的样式调整 */
-        video:fullscreen {
-            border: none;
-            border-radius: 0;
-            width: 100%;
-            height: 100%;
-        }
-        video:-webkit-full-screen {
-            border: none;
-            border-radius: 0;
-            width: 100%;
-            height: 100%;
-        }
-        
+        video { width: 100%; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); background: #000; outline: none; border: 4px solid #fff; }
+        video:fullscreen { border: none; border-radius: 0; width: 100%; height: 100%; }
         canvas { display: none; }
         
         .status-text { margin-top: 15px; font-weight: bold; color: var(--rabbit-red); min-height: 24px; font-size: 15px; }
         
-        .preview-box { 
-            margin-top: 25px; 
-            padding: 20px; 
-            border: 3px dashed var(--pear-yellow); 
-            border-radius: 20px; 
-            display: none; 
-            background: #fffcf0; 
-        }
+        .preview-box { margin-top: 25px; padding: 20px; border: 3px dashed var(--pear-yellow); border-radius: 20px; display: none; background: #fffcf0; }
+        .tip { font-size: 13px; color: #e67e22; margin-top: 12px; background: #fff3e0; padding: 12px; border-radius: 15px; border: none; box-shadow: inset 0 0 5px rgba(0,0,0,0.05); }
 
-        .tip { 
-            font-size: 13px; 
-            color: #e67e22; 
-            margin-top: 12px; 
-            background: #fff3e0; 
-            padding: 12px; 
-            border-radius: 15px; 
-            border: none;
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
-        }
-
+        /* ================= 加载层 ================= */
         .loader-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255,255,255,0.9); z-index: 10;
             display: none; align-items: center; justify-content: center; flex-direction: column;
-            border-radius: 20px;
-            backdrop-filter: blur(3px);
+            border-radius: 20px; backdrop-filter: blur(3px);
         }
         .spinner { border: 5px solid #f3f3f3; border-top: 5px solid var(--rabbit-red); border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* ================= 倒计时遮罩 ================= */
-        #countdown-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 142, 142, 0.95); /* 兔子粉半透明背景 */
-            z-index: 9999;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            backdrop-filter: blur(5px);
+        /* ================= 倒计时 & 进度条遮罩 ================= */
+        .overlay-fullscreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 142, 142, 0.95); 
+            z-index: 9999; display: none; align-items: center; justify-content: center; flex-direction: column;
+            backdrop-filter: blur(5px); text-align: center;
         }
+        
         .countdown-number {
-            font-size: 150px;
-            color: #fff;
-            font-weight: 900;
+            font-size: 150px; color: #fff; font-weight: 900;
             text-shadow: 4px 4px 0px rgba(0,0,0,0.1);
             font-family: "Arial Rounded MT Bold", "Comic Sans MS", sans-serif;
             animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        
-        @keyframes popIn {
-            0% { transform: scale(0.5); opacity: 0; }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); opacity: 1; }
-        }
+        .overlay-text { font-size: 24px; color: #fff; margin-top: 20px; font-weight: bold; }
 
-        .countdown-sub {
-            font-size: 24px;
-            color: #fff;
-            margin-top: 20px;
-            font-weight: bold;
+        /* 进度条样式 */
+        .progress-container { width: 80%; max-width: 300px; height: 16px; background: rgba(255,255,255,0.3); border-radius: 10px; margin-top: 20px; overflow: hidden; padding: 2px; }
+        .progress-bar { width: 0%; height: 100%; background: #fff; border-radius: 8px; transition: width 0.2s ease; }
+        
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 50% { transform: scale(1.2); } 100% { transform: scale(1); opacity: 1; } }
+
+        /* ================= 微信提示遮罩 ================= */
+        #wechat-tip-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); z-index: 10000; display: none;
+            color: #fff; text-align: center; padding-top: 40px;
         }
+        .arrow-icon { position: absolute; top: 10px; right: 20px; font-size: 60px; animation: float 1.5s infinite ease-in-out; }
+        .wechat-text { margin-top: 80px; font-size: 18px; line-height: 1.6; font-weight: bold; padding: 0 20px; }
+        @keyframes float { 0%, 100% { transform: translateY(0) rotate(-20deg); } 50% { transform: translateY(-10px) rotate(-20deg); } }
     </style>
 </head>
 <body>
 
 <!-- 倒计时层 -->
-<div id="countdown-overlay">
+<div id="countdown-overlay" class="overlay-fullscreen">
     <div class="countdown-number" id="countdownText">3</div>
-    <div class="countdown-sub">Ready?</div>
+    <div class="overlay-text">Ready?</div>
+</div>
+
+<!-- 视频压制进度层 -->
+<div id="processing-overlay" class="overlay-fullscreen" style="background: rgba(50, 50, 50, 0.95);">
+    <div style="font-size: 60px;">⚙️</div>
+    <div class="overlay-text">视频压制中...<br><span style="font-size:16px; opacity:0.8;">Making Magic Happen</span></div>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div style="color:white; margin-top:10px; font-weight:bold;" id="progressText">0%</div>
+</div>
+
+<!-- 微信引导层 -->
+<div id="wechat-tip-overlay" onclick="this.style.display='none'">
+    <div class="arrow-icon">⤴️</div>
+    <div class="wechat-text">
+        <p style="font-size:22px; color:#F9CA24;">无法直接下载</p>
+        <p>由于微信限制，请点击右上角 <b>...</b></p>
+        <p>选择 <b>"在浏览器打开"</b></p>
+        <p>即可正常下载视频</p>
+        <br>
+        <p style="font-size:14px; color:#aaa;">(点击任意处关闭提示)</p>
+    </div>
 </div>
 
 <div class="container">
-    <!-- 头部图片 -->
     <div class="header-banner">
-        <!-- 请替换为您的图片路径 -->
         <img src="header.png" alt="Firstleap Elves" onerror="this.style.display='none'">
     </div>
 
@@ -322,7 +209,6 @@
             <div id="loadingText" style="color: #555; font-weight: bold;">加载中 Loading...</div>
         </div>
 
-        <!-- 注意：添加了 playsinline 以防止 iOS 在非全屏下自动全屏，但我们代码里会手动触发 -->
         <video id="mainVideo" playsinline controls controlsList="nodownload" crossOrigin="anonymous">
             <source src="" type="video/mp4">
             您的浏览器不支持视频标签。
@@ -335,7 +221,7 @@
         <button class="btn btn-play" id="playBtn" onclick="togglePreview()">▶️ 预览原片 Preview</button>
 
         <button class="btn btn-record" id="recordBtn" onclick="prepareAndStartRecording()">🎙️ 准备就绪，开始配音</button>
-        <button class="btn btn-stop" id="stopBtn" onclick="stopRecording()">⏹️ 完成配音，生成视频</button>
+        <button class="btn btn-stop" id="stopBtn" onclick="stopRecording()">⏹️ 完成配音</button>
         
         <canvas id="processCanvas"></canvas>
     </div>
@@ -347,16 +233,15 @@
         
         <video id="previewVideo" style="width:100%; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1); background:#000;" controls playsinline></video>
         
-        <!-- 双按钮区域 -->
         <div class="btn-group">
             <button class="btn btn-retry" onclick="resetRecording()">🔄 重录 Retry</button>
-            <a id="downloadLink" class="btn btn-download">💾 保存视频 Save</a>
+            <a id="downloadLink" class="btn btn-download" onclick="handleDownloadClick(event)">💾 保存视频 Save</a>
         </div>
     </div>
 </div>
 
 <script>
-    // ================= 数据配置区 (保持原样) =================
+    // ================= 数据配置区 =================
     const videoDatabase = {
         "K2A": [
             "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763011941537284494.mp4", 
@@ -494,8 +379,7 @@
     let videoGainNode = null; 
     let isRecording = false;
 
-    // ================= 逻辑区 =================
-    // 动态生成级别选项
+    // ================= 初始化 =================
     const levels = Object.keys(videoDatabase);
     const levelSelect = document.getElementById("levelSelect");
     levels.forEach(lvl => {
@@ -552,8 +436,6 @@
         
         videoPlayer.src = url;
         videoPlayer.load();
-
-        // 默认开启 controls，允许拖动
         videoPlayer.controls = true;
 
         videoPlayer.onprogress = function() {
@@ -574,23 +456,15 @@
             document.getElementById("statusText").innerText = "✅ 视频加载完毕，可先预览，或直接配音";
         };
 
-        // 监听视频自然结束
         videoPlayer.onended = function() {
-            if(!isRecording) {
-                playBtn.innerHTML = "▶️ 预览原片 Preview";
-            }
+            if(!isRecording) playBtn.innerHTML = "▶️ 预览原片 Preview";
         };
 
-        // 新增：监听原生控件的播放暂停，同步更新自定义按钮文字
         videoPlayer.onplay = function() {
-            if (!isRecording) {
-                playBtn.innerHTML = "⏸️ 暂停播放 Pause";
-            }
+            if (!isRecording) playBtn.innerHTML = "⏸️ 暂停播放 Pause";
         };
         videoPlayer.onpause = function() {
-            if (!isRecording) {
-                playBtn.innerHTML = "▶️ 预览原片 Preview";
-            }
+            if (!isRecording) playBtn.innerHTML = "▶️ 预览原片 Preview";
         };
 
         videoPlayer.onerror = function() {
@@ -602,10 +476,8 @@
         videoContainer.scrollIntoView({behavior: "smooth"});
     }
 
-    // ================= 预览/暂停功能 =================
     function togglePreview() {
         const video = document.getElementById("mainVideo");
-        // 点击按钮时仅切换状态，具体文字更新交给 onplay/onpause 监听器
         if (video.paused) {
             video.volume = 1.0; 
             video.muted = false;
@@ -615,7 +487,6 @@
         }
     }
 
-    // ================= 重录功能 =================
     function resetRecording() {
         document.getElementById("resultArea").style.display = "none";
         document.getElementById("recordBtn").style.display = "block";
@@ -626,7 +497,6 @@
         const mainVideo = document.getElementById("mainVideo");
         mainVideo.currentTime = 0;
         mainVideo.pause();
-        // 恢复控件
         mainVideo.controls = true;
 
         const preview = document.getElementById("previewVideo");
@@ -638,19 +508,16 @@
         document.getElementById("video-container").scrollIntoView({behavior: "smooth"});
     }
 
-    // ================= 倒计时与录制准备逻辑 =================
+    // ================= 核心录制逻辑 =================
 
     async function prepareAndStartRecording() {
         const video = document.getElementById("mainVideo");
-
         if (video.readyState < 3) {
             alert("视频尚未加载完成");
             return;
         }
 
-        // 1. 先获取麦克风权限，确保倒计时结束后不会被弹窗打断
         try {
-            // 预先初始化AudioContext以满足用户手势要求
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!audioCtx || audioCtx.state === 'closed') {
                 audioCtx = new AudioContext();
@@ -659,35 +526,28 @@
             }
 
             micStream = await navigator.mediaDevices.getUserMedia({ 
-                audio: { 
-                    echoCancellation: true, 
-                    noiseSuppression: true,
-                    autoGainControl: true 
-                } 
+                audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } 
             });
         } catch (err) {
             alert("无法获取麦克风权限！请在浏览器设置中允许。");
             return;
         }
 
-        // 2. 显示倒计时遮罩
+        // 显示倒计时
         const overlay = document.getElementById('countdown-overlay');
         const text = document.getElementById('countdownText');
         let count = 3;
         
         overlay.style.display = 'flex';
         text.innerText = count;
-        
-        // 清除旧的动画类以便重新触发
         text.style.animation = 'none';
-        text.offsetHeight; /* trigger reflow */
+        text.offsetHeight; 
         text.style.animation = 'popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
 
         const timer = setInterval(() => {
             count--;
             if (count > 0) {
                 text.innerText = count;
-                // 重置动画
                 text.style.animation = 'none';
                 text.offsetHeight; 
                 text.style.animation = 'popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
@@ -696,7 +556,6 @@
                 text.innerText = "GO!";
                 setTimeout(() => {
                     overlay.style.display = 'none';
-                    // 3. 倒计时结束，正式开始录制逻辑
                     executeActualRecording();
                 }, 500);
             }
@@ -708,48 +567,27 @@
         const canvas = document.getElementById("processCanvas");
         const ctx = canvas.getContext("2d");
         const status = document.getElementById("statusText");
-        const playBtn = document.getElementById("playBtn");
         
-        // === 视频重置与全屏 ===
         video.pause();
         video.currentTime = 0;
         video.muted = false; 
         video.volume = 1.0; 
-        
-        // 录音时隐藏原生控件
         video.controls = false;
-        playBtn.innerHTML = "▶️ 预览原片 Preview"; 
         
         // 尝试全屏
         try {
-            if (video.requestFullscreen) {
-                await video.requestFullscreen();
-            } else if (video.webkitRequestFullscreen) {
-                await video.webkitRequestFullscreen();
-            } else if (video.webkitEnterFullscreen) {
-                video.webkitEnterFullscreen();
-            } else if (video.msRequestFullscreen) {
-                await video.msRequestFullscreen();
-            }
-        } catch (err) {
-            console.log("全屏进入失败或被拦截:", err);
-        }
+            if (video.requestFullscreen) await video.requestFullscreen();
+            else if (video.webkitRequestFullscreen) await video.webkitRequestFullscreen();
+            else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+        } catch (err) { console.log("全屏被拦截:", err); }
         
-        // 播放视频
-        try {
-            await video.play();
-        } catch (e) {
-            alert("自动播放失败，请手动点击播放");
-            video.controls = true; 
-            return;
-        }
+        try { await video.play(); } 
+        catch (e) { alert("自动播放失败，请手动点击播放"); video.controls = true; return; }
         
-        // === 音频节点设置 ===
+        // 音频处理
         dest = audioCtx.createMediaStreamDestination();
         micGainNode = audioCtx.createGain();
         videoGainNode = audioCtx.createGain();
-
-        // 麦克风放大，背景音压低
         micGainNode.gain.value = 2.0; 
         videoGainNode.gain.value = 0.3; 
 
@@ -766,12 +604,10 @@
             }
             sourceVideo.connect(videoGainNode);
             videoGainNode.connect(dest);
-            sourceVideo.connect(audioCtx.destination); // 同时也让用户听到
-        } catch (e) {
-            console.error(e);
-        }
+            sourceVideo.connect(audioCtx.destination); 
+        } catch (e) { console.error(e); }
 
-        // === 录制设置 ===
+        // Canvas录制流
         canvas.width = video.videoWidth || 640;
         canvas.height = video.videoHeight || 360;
         canvasStream = canvas.captureStream(30);
@@ -795,7 +631,12 @@
         mediaRecorder.ondataavailable = (e) => {
             if (e.data.size > 0) recordedChunks.push(e.data);
         };
-        mediaRecorder.onstop = exportVideo;
+        
+        // 注意：不再直接调用 exportVideo，改为由 simulateProcessing 调用
+        mediaRecorder.onstop = () => {
+            // 录制结束，流数据收集完毕后，开始模拟压制进度
+            simulateProcessing();
+        };
 
         isRecording = true;
         drawToCanvas(video, ctx, canvas);
@@ -815,9 +656,7 @@
         try {
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             requestAnimationFrame(() => drawToCanvas(video, ctx, canvas));
-        } catch (e) {
-            stopRecording();
-        }
+        } catch (e) { stopRecording(); }
     }
 
     function stopRecording() {
@@ -827,22 +666,14 @@
         const video = document.getElementById("mainVideo");
         video.pause();
         
-        // 尝试退出全屏
+        // 退出全屏
         try {
             if (document.fullscreenElement || document.webkitFullscreenElement) {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
             }
-        } catch(e) {
-            console.log("退出全屏时发生非关键错误:", e);
-        }
+        } catch(e) { console.log("退出全屏错误:", e); }
         
-        // 恢复控件
         video.controls = true;
 
         if (mediaRecorder && mediaRecorder.state !== "inactive") {
@@ -851,33 +682,79 @@
 
         if (micStream) micStream.getTracks().forEach(track => track.stop());
         if (canvasStream) canvasStream.getTracks().forEach(track => track.stop());
-        
-        if (audioCtx && audioCtx.state !== 'closed') {
-            audioCtx.suspend(); 
-        }
+        if (audioCtx && audioCtx.state !== 'closed') audioCtx.suspend(); 
 
         document.getElementById("recordBtn").style.display = "block";
         document.getElementById("stopBtn").style.display = "none";
-        document.getElementById("statusText").innerText = "⚡ 正在合成配音视频...";
+        document.getElementById("statusText").innerText = "✨ 配音完成，请查看下方";
         document.getElementById("statusText").style.color = "var(--pear-yellow)";
     }
 
-    function exportVideo() {
+    // ================= 模拟压制进度 & 微信处理 =================
+
+    function simulateProcessing() {
+        const overlay = document.getElementById('processing-overlay');
+        const bar = document.getElementById('progressBar');
+        const text = document.getElementById('progressText');
+        
+        overlay.style.display = 'flex';
+        let progress = 0;
+        bar.style.width = '0%';
+        text.innerText = '0%';
+
+        const interval = setInterval(() => {
+            // 模拟非线性进度：开始快，后面慢
+            let step = 0;
+            if (progress < 50) step = 5;
+            else if (progress < 80) step = 3;
+            else step = 1;
+
+            progress += step;
+            if (progress > 100) progress = 100;
+
+            bar.style.width = progress + '%';
+            text.innerText = progress + '%';
+
+            if (progress >= 100) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    finalizeVideo(); // 进度条走完后，显示结果
+                }, 300);
+            }
+        }, 50); // 约1.5秒完成
+    }
+
+    function finalizeVideo() {
         const blob = new Blob(recordedChunks, { type: 'video/webm' });
         const url = URL.createObjectURL(blob);
         const preview = document.getElementById("previewVideo");
         preview.src = url;
         
         const date = new Date();
-        const filename = `Firstleap_Dubbing_${date.getTime()}.webm`;
+        const filename = `Firstleap_Voice_${date.getTime()}.webm`;
         const downloadBtn = document.getElementById("downloadLink");
         downloadBtn.href = url;
         downloadBtn.download = filename;
         
-        document.getElementById("resultArea").style.display = "block";
-        document.getElementById("statusText").innerText = "✨ 制作成功！Excellent!";
+        // 显示结果区域
+        const resultArea = document.getElementById("resultArea");
+        resultArea.style.display = "block";
+        resultArea.scrollIntoView({behavior: "smooth"});
         
-        document.getElementById("resultArea").scrollIntoView({behavior: "smooth"});
+        document.getElementById("statusText").innerText = "🎉 制作成功！Excellent!";
+    }
+
+    function isWeChat() {
+        return /MicroMessenger/i.test(navigator.userAgent);
+    }
+
+    function handleDownloadClick(event) {
+        if (isWeChat()) {
+            event.preventDefault(); // 阻止默认下载行为
+            document.getElementById("wechat-tip-overlay").style.display = "block";
+        }
+        // 非微信环境，默认触发 href 下载
     }
 </script>
 
