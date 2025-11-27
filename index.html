@@ -44,7 +44,6 @@
             border-radius: 20px;
             margin-bottom: 15px;
             overflow: hidden;
-            /* 这里是为了让图片看起来像融入了设计 */
             box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
         }
         
@@ -52,7 +51,6 @@
             width: 100%;
             height: auto;
             display: block;
-            /* 如果图片有背景色，这会让它更好地融合 */
             mix-blend-mode: multiply; 
         }
 
@@ -67,7 +65,6 @@
             display: inline-block;
         }
         
-        /* 装饰性的小元素 */
         h1::after {
             content: "✨";
             position: absolute;
@@ -122,7 +119,7 @@
             transition: 0.3s;
             color: #555;
             font-weight: bold;
-            -webkit-appearance: none; /* 去除默认样式 */
+            -webkit-appearance: none;
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF9966' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
             background-repeat: no-repeat;
             background-position: right 15px center;
@@ -163,16 +160,10 @@
             transform: none;
         }
 
-        /* 搜索按钮 - 对应怪兽绿色 */
+        /* 按钮颜色定义 */
         .btn-primary { background: linear-gradient(135deg, #a8e063 0%, #56ab2f 100%); } 
-        
-        /* 预览按钮 - 对应梨子黄色 */
         .btn-play { background: linear-gradient(135deg, #fce38a 0%, #f38181 100%); display: none; margin-bottom: 10px; color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,0.1); }
-        
-        /* 录音按钮 - 对应兔子红色 */
         .btn-record { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); background: linear-gradient(to right, #ff5f6d, #ffc371); display: none; }
-        
-        /* 停止按钮 - 脉冲动画 */
         .btn-stop { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); display: none; animation: pulse 1.5s infinite; }
         
         .btn-group {
@@ -213,6 +204,20 @@
             border: 4px solid #fff;
         }
         
+        /* 全屏时的样式调整，确保视频居中 */
+        video:fullscreen {
+            border: none;
+            border-radius: 0;
+            width: 100%;
+            height: 100%;
+        }
+        video:-webkit-full-screen {
+            border: none;
+            border-radius: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
         canvas { display: none; }
         
         .status-text { margin-top: 15px; font-weight: bold; color: var(--rabbit-red); min-height: 24px; font-size: 15px; }
@@ -251,9 +256,9 @@
 <body>
 
 <div class="container">
-    <!-- 这里放置你的图片，请将 src 修改为你保存的图片路径 -->
+    <!-- 头部图片 -->
     <div class="header-banner">
-        <!-- ⚠️ 重要：请将下方src替换为你上传的那张精灵图片的路径/文件名 -->
+        <!-- 请替换为您的图片路径 -->
         <img src="header.png" alt="Firstleap Elves" onerror="this.style.display='none'">
     </div>
 
@@ -277,6 +282,7 @@
             <div id="loadingText" style="color: #555; font-weight: bold;">加载中 Loading...</div>
         </div>
 
+        <!-- 注意：添加了 playsinline 以防止 iOS 在非全屏下自动全屏，但我们代码里会手动触发 -->
         <video id="mainVideo" playsinline controls controlsList="nodownload" crossOrigin="anonymous">
             <source src="" type="video/mp4">
             您的浏览器不支持视频标签。
@@ -638,6 +644,26 @@
         
         playBtn.innerHTML = "▶️ 预览原片 Preview"; 
         
+        // ============================================================
+        // [新增逻辑] 尝试进入全屏模式
+        // 兼容 Chrome, Safari, iOS, IE/Edge
+        // ============================================================
+        try {
+            if (video.requestFullscreen) {
+                await video.requestFullscreen();
+            } else if (video.webkitRequestFullscreen) {
+                await video.webkitRequestFullscreen();
+            } else if (video.webkitEnterFullscreen) {
+                // iOS 视频元素特有全屏方法
+                video.webkitEnterFullscreen();
+            } else if (video.msRequestFullscreen) {
+                await video.msRequestFullscreen();
+            }
+        } catch (err) {
+            console.log("全屏进入失败或被拦截:", err);
+            // 即使全屏失败，也不影响继续录制，所以不return
+        }
+        
         try {
             await video.play();
         } catch (e) {
@@ -726,6 +752,23 @@
 
         const video = document.getElementById("mainVideo");
         video.pause();
+        
+        // ============================================================
+        // [新增逻辑] 尝试退出全屏模式
+        // ============================================================
+        try {
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        } catch(e) {
+            console.log("退出全屏时发生非关键错误:", e);
+        }
         
         // 【关键修改】停止录音后，恢复控件，允许拖拽回看
         video.controls = true;
