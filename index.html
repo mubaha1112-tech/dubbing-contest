@@ -962,24 +962,30 @@
         function enterFullscreenMode() {
             document.body.classList.add('recording-mode');
             const docElm = document.documentElement;
-            if (docElm.requestFullscreen) {
-                docElm.requestFullscreen().catch(()=>{});
-            } else if (docElm.mozRequestFullScreen) {
-                docElm.mozRequestFullScreen().catch(()=>{});
-            } else if (docElm.webkitRequestFullScreen) {
-                docElm.webkitRequestFullScreen().catch(()=>{});
-            }
+            try {
+                if (docElm.requestFullscreen) {
+                    const p = docElm.requestFullscreen();
+                    if (p && typeof p.catch === 'function') p.catch(()=>{});
+                } else if (docElm.mozRequestFullScreen) {
+                    docElm.mozRequestFullScreen();
+                } else if (docElm.webkitRequestFullScreen) {
+                    docElm.webkitRequestFullScreen();
+                }
+            } catch (e) {}
         }
 
         function exitFullscreenMode() {
             document.body.classList.remove('recording-mode');
-            if (document.exitFullscreen) {
-                document.exitFullscreen().catch(()=>{});
-            } else if (document.mozCancelFullScreen) {
-                document.mozCancelFullScreen().catch(()=>{});
-            } else if (document.webkitCancelFullScreen) {
-                document.webkitCancelFullScreen().catch(()=>{});
-            }
+            try {
+                if (document.exitFullscreen) {
+                    const p = document.exitFullscreen();
+                    if (p && typeof p.catch === 'function') p.catch(()=>{});
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitCancelFullScreen) {
+                    document.webkitCancelFullScreen();
+                }
+            } catch (e) {}
         }
 
         async function executeActualRecording() {
@@ -1111,7 +1117,7 @@
                 });
             };
 
-            // 关键修复：必须启动录制，否则 onstop 不会触发
+            // 必须启动录制，否则 onstop 不会触发
             try {
                 mediaRecorder.start(500); // 每 500ms 切片，提升停止后的响应度
             } catch (e) {
@@ -1123,10 +1129,8 @@
             
             isRecording = true;
             document.getElementById("playBtn").style.display = "none";
-            // 全屏录制时隐藏“完成配音(Stop)”按钮
-            const actionBtn = document.getElementById("actionBtn");
+            // 修复：避免重复声明，直接使用已获取的引用
             actionBtn.style.display = "none";
-            const status = document.getElementById("statusText");
             status.innerText = "🔴 录制中 (Recording)...";
             status.style.color = "#FF0000";
             
@@ -1292,7 +1296,7 @@
                 extBox.style.display = "block";
                 wxHint.style.display = IS_WECHAT ? "block" : "none";
 
-                // 微信里默认自动上传生成链接，便于分享/外部下载
+                //ирғ 微信上默认自动上传生成链接，便于分享/外部下载
                 if (IS_WECHAT) {
                     autoStartUpload(filename);
                 }
