@@ -973,8 +973,8 @@
             dest = audioCtx.createMediaStreamDestination();
             micGainNode = audioCtx.createGain();
             videoGainNode = audioCtx.createGain();
-            micGainNode.gain.value = 3.0;   // 放大麦克风
-            videoGainNode.gain.value = 0.2; // 降低原视频音量，避免盖过人声
+            micGainNode.gain.value = 1.5;   // 放大麦克风
+            videoGainNode.gain.value = 0.8; // 降低原视频音量，避免盖过人声
 
             sourceMic = audioCtx.createMediaStreamSource(micStream);
             sourceMic.connect(micGainNode);
