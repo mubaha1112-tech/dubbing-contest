@@ -115,6 +115,7 @@
         .btn-stop{background:linear-gradient(135deg,#f6d365 0%,#fda085 100%)}
         .btn-pause{background:linear-gradient(135deg,#fce38a 0%,#f38181 100%)}
         .btn-resume{background:var(--monster-green)}
+        .btn-gray{background:#dfe6e9; color:#636e72; box-shadow:0 4px 0 #b2bec3}
 
         /* Floating Exit Fullscreen FAB (always visible in fullscreen) */
         .exit-fs-fab{
@@ -132,19 +133,16 @@
             padding:6px 10px; border-radius:12px; display:none;
         }
 
-        /* Compact one-line Control bar */
+        /* Compact one-line Control bar (no horizontal scrolling; wrap if needed) */
         .controls{
             display:flex; align-items:center; gap:8px;
-            padding:10px 8px 0; /* keep top spacing tight */
-            overflow-x:auto; -webkit-overflow-scrolling:touch;
-            scrollbar-width:none; flex-wrap:nowrap; white-space:nowrap;
+            padding:10px 8px 0;
+            flex-wrap:wrap; /* 一眼可见，必要时换行显示 */
         }
-        .controls::-webkit-scrollbar{ display:none; } /* hide scrollbar on mobile */
-
         .select{ flex:0 0 auto; }
         select{
-            min-width:112px; max-width:160px;
-            padding:8px 30px 8px 10px; border:2px solid #eee; border-radius:14px;
+            width:auto; min-width:80px; max-width:120px; /* 适应文字，不要太长 */
+            padding:6px 26px 6px 10px; border:2px solid #eee; border-radius:14px;
             font-size:13px; background:#fafafa; outline:none; color:#555; font-weight:700;
             -webkit-appearance:none; appearance:none;
             background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF9966' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
@@ -173,17 +171,15 @@
         .icon-btn.green{ background:var(--primary-grad); }
         .icon-btn.rec{ background:var(--rec-grad); }
 
-        /* Time + timeline stay single row, timeline grows */
-        .timegroup{ display:flex; align-items:center; gap:8px; flex:1 1 auto; min-width:120px; }
-        .time{ display:flex; align-items:center; gap:6px; flex:1 1 auto; }
-        .timeline{ flex:1 1 auto; min-width:120px; }
-        input[type="range"]{ width:100%; }
+        /* Time area（取消进度条，仅保留时间文本） */
+        .timegroup{ display:flex; align-items:center; gap:6px; flex:0 0 auto; }
+        .time{ display:flex; align-items:center; gap:6px; }
+        .timeline{ display:none; } /* 取消进度条 */
         #curTime, #durTime{ font-size:12px; color:#666; font-weight:700; }
 
-        /* Volume popover (saves horizontal space) */
         .vol-wrap{ position:relative; flex:0 0 auto; }
         .vol-pop{
-            position:absolute; right:-4px; bottom:46px; /* above the icon */
+            position:absolute; right:-4px; bottom:46px;
             background:#fff; border-radius:12px; padding:10px; box-shadow:0 10px 24px rgba(0,0,0,.18);
             display:none; align-items:center; gap:8px; z-index:50;
         }
@@ -258,7 +254,7 @@
         #playerShell:-webkit-full-screen video{
             width:100%;
             height:100%;
-            object-fit:contain; /* keep ratio; fill screen safely */
+            object-fit:contain;
         }
 
         /* CSS "pseudo-fullscreen" for iOS/WeChat fallback */
@@ -288,7 +284,7 @@
         /* On very narrow screens, hide right time to save space */
         @media (max-width:420px){
             #durTime{ display:none; }
-            select{ min-width:104px; }
+            select{ max-width:108px; }
         }
 
         /* Save tips overlay (WeChat/iOS) */
@@ -320,12 +316,13 @@
         <div class="player-wrap" id="playerWrap">
             <video id="mainVideo" playsinline webkit-playsinline crossorigin="anonymous" controlslist="nodownload"></video>
 
-            <!-- Top bar: REC + pause/stop -->
+            <!-- Top bar: REC + pause/stop + back -->
             <div class="topbar">
                 <div class="rec-badge" id="recBadge"><span class="rec-dot"></span> REC</div>
                 <div class="record-ctrls" id="recordCtrls">
                     <button class="pill-btn btn-pause" id="pauseRecBtn" title="暂停/继续录制">⏸️ 暂停</button>
                     <button class="pill-btn btn-stop" id="stopRecBtn" title="结束录制">⏹️ 结束</button>
+                    <button class="pill-btn btn-gray" id="backBtn" title="返回">⬅️ 返回</button>
                 </div>
             </div>
 
@@ -390,23 +387,23 @@
             </div>
         </div>
 
-        <!-- Compact one-row toolbar -->
-        <div class="controls" title="左右滑动查看更多按钮">
+        <!-- Compact toolbar（取消滑动，进度条隐藏，选择框自适应） -->
+        <div class="controls">
             <div class="select">
                 <select id="levelSelect" title="选择级别">
-                    <option value="">选择级别 Level</option>
+                    <option value="">选择级别</option>
                 </select>
             </div>
             <div class="select">
                 <select id="unitSelect" disabled title="选择单元">
-                    <option value="">选择单元 Unit</option>
+                    <option value="">选择单元</option>
                 </select>
             </div>
 
             <!-- Play/Pause icon button -->
             <button class="icon-btn green" id="playPauseBtn" disabled aria-label="播放/暂停" title="播放/暂停">▶️</button>
 
-            <!-- Time + progress -->
+            <!-- Time only (no progress bar) -->
             <div class="timegroup">
                 <div class="time">
                     <span id="curTime">00:00</span>
@@ -595,6 +592,7 @@ const playPauseBtn = document.getElementById('playPauseBtn');
 const recordBtn = document.getElementById('recordBtn');
 const pauseRecBtn = document.getElementById('pauseRecBtn');
 const stopRecBtn = document.getElementById('stopRecBtn');
+const backBtn = document.getElementById('backBtn');
 const fsBtn = document.getElementById('fsBtn');
 const exitFsFab = document.getElementById('exitFsFab');
 
@@ -660,7 +658,7 @@ function showLoader(show){
 }
 function beginProcessing(){
     // 开始“压制/合成中”阶段
-    hideFinishUI(); // 隐藏完成界面（若此前存在）
+    hideFinishUI();
     processingProgress = 0; progressBar.style.width='0%'; progressText.textContent='0%';
     processingOverlay.style.display='flex';
     if (processingInterval) clearInterval(processingInterval);
@@ -739,7 +737,7 @@ function canShowCenterRecord(){
 function updateFsBtnLabel(){
     fsBtn.textContent = isFullscreen() ? '🡼' : '⛶';
     fsBtn.title = isFullscreen() ? '退出全屏' : '全屏';
-    exitFsFab.style.display = isFullscreen() ? 'inline-flex' : 'none'; // 浮动退出键
+    exitFsFab.style.display = isFullscreen() ? 'inline-flex' : 'none';
 }
 function updateOverlays(){
     recordOverlay.style.display = canShowCenterRecord() ? 'flex' : 'none';
@@ -774,7 +772,7 @@ function hideFinishUI(){
 
 /* ================= 级别&单元联动 ================= */
 function updateUnits(){
-    unitSelect.innerHTML = '<option value="">选择单元 Unit</option>';
+    unitSelect.innerHTML = '<option value="">选择单元</option>';
     unitSelect.disabled = true;
     hideFinishUI();
     clearComposedURL();
@@ -913,7 +911,7 @@ function exitFullscreen(){
     }
 }
 
-/* 全屏按钮：支持标准全屏，iOS/微信下降级为 CSS 伪全屏，保证铺满屏幕且保留自定义 UI */
+/* 全屏按钮 */
 fsBtn.addEventListener('click', ()=>{
     if (!isFullscreen()){
         enterFullscreen();
@@ -923,7 +921,7 @@ fsBtn.addEventListener('click', ()=>{
 });
 exitFsFab.addEventListener('click', exitFullscreen);
 
-/* 标准全屏变化时，控制中央“开始配音”按钮显示；退出时移除伪全屏类 */
+/* 标准全屏变化 */
 ['fullscreenchange','webkitfullscreenchange'].forEach(evt=>{
     document.addEventListener(evt, ()=>{
         if (!isFullscreen()){
@@ -932,6 +930,15 @@ exitFsFab.addEventListener('click', exitFullscreen);
         }
         updateOverlays();
     });
+});
+
+/* 返回按钮：位于“结束”右侧；优先退出全屏，否则返回上页 */
+backBtn.addEventListener('click', ()=>{
+    if (isFullscreen()){
+        exitFullscreen();
+    }else{
+        try{ history.back(); }catch(e){}
+    }
 });
 
 /* ================= 配音控制 ================= */
@@ -1040,7 +1047,7 @@ async function executeRecording(){
     const combinedStream = new MediaStream([ vTracks[0], mixedAudioTrack ]);
 
     // 初始化录制器
-    recordedMimeType = bestMime();
+    recordedMimeType = bestMimeTypeOrEmpty();
     try{
         mediaRecorder = recordedMimeType
             ? new MediaRecorder(combinedStream, { mimeType: recordedMimeType, videoBitsPerSecond: 2500000 })
@@ -1078,6 +1085,19 @@ async function executeRecording(){
     recordBtn.style.display = 'none';
 
     video.onended = ()=>{ stopRecording(); };
+}
+function bestMimeTypeOrEmpty(){
+    const types = [
+        "video/mp4;codecs=avc1",
+        "video/mp4",
+        "video/webm;codecs=h264",
+        "video/webm;codecs=vp9",
+        "video/webm"
+    ];
+    for (const t of types){
+        if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) return t;
+    }
+    return "";
 }
 
 function togglePauseRecording(){
@@ -1208,7 +1228,6 @@ document.addEventListener('keydown', (e)=>{
 window.addEventListener('resize', updateOverlays);
 
 /* ================= 下载处理（解决微信无法直接下载 & iOS 兼容） ================= */
-// 总入口：拦截“保存视频”点击，根据环境走不同策略
 finishDownload.addEventListener('click', async (e)=>{
     if (finishDownload.getAttribute('aria-disabled') === 'true'){ e.preventDefault(); return; }
     if (!composedURL){ return; }
@@ -1249,7 +1268,7 @@ async function tryNativeShare(){
     return false;
 }
 
-// 强制下载（非微信/iOS）：创建临时 a 标签点击
+// 强制下载（非微信/iOS）
 function forceDownload(url, filename){
     const a = document.createElement('a');
     a.href = url;
@@ -1304,14 +1323,13 @@ video{width:100%;height:auto;max-height:80dvh;background:#000}
     }
 });
 
-// 复制链接（部分设备可在系统浏览器打开再保存）
+// 复制链接
 copyLinkBtn.addEventListener('click', async ()=>{
     if (!composedURL) return;
     try{
         await navigator.clipboard.writeText(composedURL);
         alert('已复制视频链接，请在浏览器中打开后保存。');
     }catch(e){
-        // 兜底：选中临时输入框
         const ipt = document.createElement('input');
         ipt.value = composedURL;
         document.body.appendChild(ipt);
