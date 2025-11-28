@@ -72,6 +72,19 @@
             text-align: center;
             color: #fff;
             padding: 20px;
+            max-width: 640px;
+        }
+        /* 新增：开场页 header 图片样式 */
+        .welcome-header {
+            width: min(76vw, 420px);
+            height: auto;
+            max-width: 420px;
+            display: none; /* 等待探测到真实文件再显示，避免裂图 */
+            margin: 0 auto 14px;
+            border-radius: 16px;
+            box-shadow: 0 14px 38px rgba(0,0,0,0.22);
+            background: rgba(0,0,0,0.1);
+            animation: fadeIn .8s ease .05s both;
         }
         .welcome-title {
             font-weight: 900;
@@ -360,6 +373,8 @@
             <source src="opener.mp4" type="video/mp4">
         </video>
         <div class="welcome-overlay">
+            <!-- 新增：从同目录自动探测 header 图片，显示在标题上方 -->
+            <img id="welcomeHeader" class="welcome-header" alt="Firstleap Header">
             <div class="welcome-title">Firstleap Voice Magic</div>
             <div class="welcome-subtitle">奇声妙想 · 配音秀</div>
             <div>
@@ -472,6 +487,29 @@
             const wVideo = document.getElementById('welcomeVideo');
             const skipBtn = document.getElementById('welcomeSkipBtn');
             const enterBtn = document.getElementById('welcomeEnterBtn');
+            const headerImgEl = document.getElementById('welcomeHeader');
+
+            // 新增：自动探测并加载 header 图片（同目录）
+            (function loadHeaderImage() {
+                if (!headerImgEl) return;
+                const candidates = ['header.webp', 'header.png', 'header.jpg', 'header.jpeg', 'header.svg'];
+                let idx = 0;
+                const tryNext = () => {
+                    if (idx >= candidates.length) {
+                        headerImgEl.style.display = 'none';
+                        return;
+                    }
+                    const url = candidates[idx++];
+                    const test = new Image();
+                    test.onload = () => {
+                        headerImgEl.src = url;
+                        headerImgEl.style.display = 'block';
+                    };
+                    test.onerror = tryNext;
+                    test.src = url;
+                };
+                tryNext();
+            })();
 
             // 生成少量轻量彩纸动画
             const colors = ['#fff176', '#ff8a80', '#80d8ff', '#ffd180', '#ea80fc', '#a7ffeb'];
@@ -1028,7 +1066,7 @@
             recordedChunks = [];
             mediaRecorder.ondataavailable = (e) => {
                 if (e.data && e.data.size > 0) {
-                    recordedChunks.push(e.data);
+                    recordedChunks.append ? recordedChunks.append(e.data) : recordedChunks.push(e.data);
                 }
             };
 
