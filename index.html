@@ -1031,6 +1031,9 @@
       const status = document.getElementById("statusText");
       const actionBtn = document.getElementById("actionBtn");
 
+      // 1. 立即隐藏控件，防止学生触碰播放键
+      video.controls = false;
+
       if (audioCtx.state === 'suspended') {
         await audioCtx.resume();
       }
@@ -1058,9 +1061,9 @@
       micGainNode = audioCtx.createGain();
       videoGainNode = audioCtx.createGain();
       
-      // 初始化时先静音，防止 Intro 期间有噪音
-      micGainNode.gain.value = 0; 
-      videoGainNode.gain.value = 0;
+      // 恢复音量
+      micGainNode.gain.value = 1.5;
+      videoGainNode.gain.value = 1.2;
 
       if (micStream && micStream.getAudioTracks().length > 0) {
         sourceMic = audioCtx.createMediaStreamSource(micStream);
@@ -1125,61 +1128,31 @@
       const pauseBtn = document.getElementById('pauseToggleBtn');
       if (pauseBtn) pauseBtn.textContent = '暂停';
 
-      // --- 核心修改：加载 Intro 图片并等待3秒 ---
-      const introImg = new Image();
-      introImg.crossOrigin = "anonymous";
-      introImg.src = "intro.png";
-
-      const startMainContent = async () => {
-          // 恢复音量
-          micGainNode.gain.value = 1.5;
-          videoGainNode.gain.value = 1.2;
-          
-          // 播放视频
-          video.currentTime = 0;
-          video.volume = 1.0;
-          video.controls = false;
-          try { await video.play(); } catch(e) {
-             alert("自动播放失败，请手动点击播放。");
-             video.controls = true;
-          }
-          
-          // 更新状态并开始绘制循环
-          isRecording = true;
-          status.innerText = "🔴 录制中 (Recording)...";
-          status.style.color = "#FF0000";
-          drawToCanvas(video, ctx, canvas);
-          video.onended = stopRecording;
-      };
-
-      introImg.onload = () => {
-          // 图片加载成功
-          try {
-              mediaRecorder.start(500);
-          } catch(e) {
-              alert("录制启动失败"); return;
-          }
-          
-          // 绘制 Intro 图片
-          ctx.fillStyle = "#000";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(introImg, 0, 0, canvas.width, canvas.height);
-          
-          status.innerText = "🎬 Intro 播放中...";
-          status.style.color = "var(--pear-yellow)";
-
-          // 等待3秒
-          setTimeout(() => {
-              startMainContent();
-          }, 3000);
-      };
-
-      introImg.onerror = () => {
-          // 图片加载失败，直接开始
-          console.warn("intro.png not found, skipping intro.");
-          try { mediaRecorder.start(500); } catch(e){}
-          startMainContent();
-      };
+      // --- 核心修复：移除了 intro.png 加载和 setTimeout 延迟 ---
+      // 直接开始录制和播放，消除停顿和播放键 bug
+      
+      try {
+          mediaRecorder.start(500);
+      } catch(e) {
+          alert("录制启动失败"); return;
+      }
+      
+      // 立即播放视频
+      video.currentTime = 0;
+      video.volume = 1.0;
+      try { 
+        await video.play(); 
+      } catch(e) {
+         console.warn("自动播放失败:", e);
+         // 万一自动播放失败（极少见，因为已有交互），至少不让它卡住
+      }
+      
+      // 更新状态并开始绘制循环
+      isRecording = true;
+      status.innerText = "🔴 录制中 (Recording)...";
+      status.style.color = "#FF0000";
+      drawToCanvas(video, ctx, canvas);
+      video.onended = stopRecording;
     }
 
     // Canvas 绘制函数
