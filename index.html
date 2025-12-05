@@ -269,6 +269,15 @@
       object-fit: contain;
     }
     video:fullscreen { border: none; border-radius: 0; width: 100%; height: 100%; }
+    
+    /* 关键修复：在录制模式下，强制隐藏video的所有原生控件 */
+    body.recording-mode video::-webkit-media-controls {
+        display: none !important;
+    }
+    body.recording-mode video::-webkit-media-controls-enclosure {
+        display: none !important;
+    }
+
     #processCanvas { display: none; }
     .status-text { margin-top: 15px; font-weight: bold; color: var(--rabbit-red); min-height: 24px; font-size: 15px; }
 
@@ -722,6 +731,10 @@
     let recordedMimeType = '';
     let animationFrameId = null;
     let hasMicPermission = false;
+    
+    // 新增变量：控制 Intro 和 绘制
+    let isIntroMode = false;
+    let introImageObj = null;
 
     // 合成进度控制
     let processingInterval = null;
@@ -844,6 +857,9 @@
       videoPlayer.src = url;
       videoPlayer.load();
       videoPlayer.volume = 1.0;
+      
+      // 重置 controls
+      videoPlayer.controls = true;
 
       videoPlayer.onprogress = function() {
         if (videoPlayer.buffered.length > 0) {
@@ -916,8 +932,7 @@
       const mainVideo = document.getElementById("mainVideo");
       mainVideo.currentTime = 0;
       mainVideo.pause();
-      mainVideo.controls = true;
-      // 注意：已取消静音控制，不强制解除静音
+      mainVideo.controls = true; // 恢复显示控件
 
       const preview = document.getElementById("previewVideo");
       if(preview.src) {
@@ -972,6 +987,9 @@
 
       const permissionGranted = await checkMicPermissionAndResumeAudio();
       if (!permissionGranted) return;
+
+      // 1. 立即隐藏控件，防止出现播放按钮
+      video.controls = false;
 
       const overlay = document.getElementById('countdown-overlay');
       const text = document.getElementById('countdownText');
@@ -1031,7 +1049,7 @@
       const status = document.getElementById("statusText");
       const actionBtn = document.getElementById("actionBtn");
 
-      // 1. 立即隐藏控件，防止学生触碰播放键
+      // 再次确认隐藏控件
       video.controls = false;
 
       if (audioCtx.state === 'suspended') {
@@ -1061,9 +1079,9 @@
       micGainNode = audioCtx.createGain();
       videoGainNode = audioCtx.createGain();
       
-      // 恢复音量
-      micGainNode.gain.value = 1.5;
-      videoGainNode.gain.value = 1.2;
+      // 初始化时先静音，防止 Intro 期间有噪音
+      micGainNode.gain.value = 0; 
+      videoGainNode.gain.value = 0;
 
       if (micStream && micStream.getAudioTracks().length > 0) {
         sourceMic = audioCtx.createMediaStreamSource(micStream);
@@ -1081,7 +1099,6 @@
         dest.connect(audioCtx.destination);
       } catch (e) {
         console.warn("MediaElementAudioSourceNode fallback logic", e);
-        // Fallback handled gracefully typically
       }
 
       const mixedAudioTrack = dest.stream.getAudioTracks()[0];
@@ -1128,67 +1145,112 @@
       const pauseBtn = document.getElementById('pauseToggleBtn');
       if (pauseBtn) pauseBtn.textContent = '暂停';
 
-      // --- 核心修复：移除了 intro.png 加载和 setTimeout 延迟 ---
-      // 直接开始录制和播放，消除停顿和播放键 bug
-      
-      try {
-          mediaRecorder.start(500);
-      } catch(e) {
-          alert("录制启动失败"); return;
-      }
-      
-      // 立即播放视频
-      video.currentTime = 0;
-      video.volume = 1.0;
-      try { 
-        await video.play(); 
-      } catch(e) {
-         console.warn("自动播放失败:", e);
-         // 万一自动播放失败（极少见，因为已有交互），至少不让它卡住
-      }
-      
-      // 更新状态并开始绘制循环
-      isRecording = true;
-      status.innerText = "🔴 录制中 (Recording)...";
-      status.style.color = "#FF0000";
-      drawToCanvas(video, ctx, canvas);
-      video.onended = stopRecording;
+      // --- 修改逻辑：持续绘制 Intro 避免录制中断 ---
+      introImageObj = new Image();
+      introImageObj.crossOrigin = "anonymous";
+      introImageObj.src = "intro.png";
+
+      const startRecorderAndDraw = () => {
+          // 启动录制器
+          try {
+              mediaRecorder.start(500);
+          } catch(e) {
+              alert("录制启动失败"); return;
+          }
+
+          // 标记为开始，进入绘图循环
+          isRecording = true;
+          // 启动 Intro 模式
+          isIntroMode = true;
+          status.innerText = "🎬 Intro 播放中...";
+          status.style.color = "var(--pear-yellow)";
+
+          // 开始绘制循环（此时绘制 Intro）
+          drawToCanvas(video, ctx, canvas);
+
+          // 3秒后切换到视频内容
+          setTimeout(() => {
+              isIntroMode = false; // 切换绘制模式
+              
+              // 恢复音量
+              micGainNode.gain.value = 1.5;
+              videoGainNode.gain.value = 1.2;
+              
+              // 播放视频
+              video.currentTime = 0;
+              video.volume = 1.0;
+              // 再次确保不显示控件
+              video.controls = false; 
+              
+              video.play().then(() => {
+                 status.innerText = "🔴 录制中 (Recording)...";
+                 status.style.color = "#FF0000";
+              }).catch((e) => {
+                 console.error("Play failed:", e);
+                 alert("自动播放失败，请点击屏幕。");
+              });
+              
+              video.onended = stopRecording;
+          }, 3000);
+      };
+
+      introImageObj.onload = () => {
+          startRecorderAndDraw();
+      };
+
+      introImageObj.onerror = () => {
+          // 图片加载失败，跳过 Intro 模式
+          console.warn("intro.png not found, skipping intro.");
+          isIntroMode = false;
+          startRecorderAndDraw(); // 逻辑里会立刻被 setTimeout 覆盖，但没关系，至少能跑
+      };
     }
 
-    // Canvas 绘制函数
+    // Canvas 绘制函数（修改版）
     function drawToCanvas(video, ctx, canvas) {
       if (!isRecording) {
         cancelAnimationFrame(animationFrameId);
         return;
       }
+      
       try {
-        if (video.readyState >= 2 && !video.paused && !video.ended) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        if (isIntroMode) {
+            // Intro 模式：绘制图片（保持黑底）
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            if (introImageObj) {
+                ctx.drawImage(introImageObj, 0, 0, canvas.width, canvas.height);
+            }
+        } else {
+            // 视频模式：绘制视频
+            if (video.readyState >= 2 && !video.ended) {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            }
         }
       } catch (e) {
         console.error("Canvas Draw Error:", e);
         isRecording = false;
         exitFullscreenMode();
-        alert("录制中断：视频跨域限制(CORS)。请联系管理员确保视频源支持CORS。");
+        alert("录制中断：视频跨域限制(CORS)。");
         stopRecording();
         return;
       }
+      
       animationFrameId = requestAnimationFrame(() => drawToCanvas(video, ctx, canvas));
     }
 
     function stopRecording() {
-      // 注意：如果是在 Intro 阶段停止，isRecording 可能为 false，但 recorder 是 active 的
-      // 所以这里逻辑微调，只要 recorder 在跑就允许停止
       if (!mediaRecorder || mediaRecorder.state === "inactive") return;
 
       isRecording = false;
+      isIntroMode = false; // 重置
       cancelAnimationFrame(animationFrameId);
       exitFullscreenMode();
 
       const video = document.getElementById("mainVideo");
       const actionBtn = document.getElementById("actionBtn");
       video.pause();
-      video.controls = true;
+      video.controls = true; // 恢复控件
 
       // 隐藏右上角覆盖层
       const overlay = document.getElementById('recordOverlay');
