@@ -248,9 +248,10 @@
     .btn-group { display: flex; gap: 15px; margin-top: 15px; }
     .btn-download {
       background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-      text-decoration: none; line-height: 1.5; flex: 1; display: flex; align-items: center; justify-content: center;
+      text-decoration: none; line-height: 1.5; flex: 1; display: none; align-items: center; justify-content: center;
       cursor: pointer; color: #fff; font-weight: bold; border-radius: 25px; box-shadow: 0 6px 0 rgba(0,0,0,0.1);
       font-size: 18px; padding: 16px; border: none;
+      animation: fadeIn 0.5s ease;
     }
     .btn-retry { background: #dfe6e9; color: #636e72; box-shadow: 0 4px 0 #b2bec3; flex: 1; }
 
@@ -423,6 +424,15 @@
       0% { transform: translateY(0) rotate(-10deg); }
       100% { transform: translateY(-20px) rotate(10deg); }
     }
+    
+    /* 封装等待区 */
+    #waitingHint {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 15px;
+      display: none; /* 默认隐藏 */
+    }
   </style>
 </head>
 <body class="welcome-active">
@@ -547,15 +557,18 @@
              playsinline
              webkit-playsinline
              x5-playsinline></video>
+      
+      <!-- 等待提示区 -->
+      <div id="waitingHint">
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+          <div class="spinner" style="width: 30px; height: 30px; border-width: 3px; margin-bottom: 10px;"></div>
+          <span style="color: var(--pear-yellow); font-weight: bold; font-size: 14px;">视频封装中，请稍候...<br>Video Processing...</span>
+        </div>
+      </div>
 
       <div class="btn-group">
         <button class="btn btn-retry" onclick="resetRecording()">🔄 重录 Retry</button>
         <a id="downloadLink" class="btn btn-download" style="display: none;">💾 下载视频 (WebM)</a>
-      </div>
-
-      <div id="waitingHint" style="text-align: center; margin: 20px 0; display: none;">
-        <div class="spinner" style="border: 3px solid #f3f3f3; border-top: 3px solid var(--rabbit-red); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: inline-block; margin-right: 10px;"></div>
-        <span style="color: var(--pear-yellow); font-weight: bold;">视频封装中...</span>
       </div>
       
       <div style="font-size:10px; color:#999; margin-top:15px; text-align:center;">
@@ -1379,26 +1392,32 @@
         if (type.includes('mp4')) ext = '.mp4';
         
         finalFilename = `Firstleap_Voice_${Date.now()}${ext}`;
-
         setupSaveButton(downloadBtn);
 
         document.getElementById("actionBtn").style.display = "none";
 
         const resultArea = document.getElementById("resultArea");
-        resultArea.style.display = "block";
+        const waitingHint = document.getElementById("waitingHint");
 
-        document.getElementById("waitingHint").style.display = "block";
-        document.getElementById("downloadLink").style.display = "none";
+        // 1. 显示结果区域
+        resultArea.style.display = "block";
+        
+        // 2. 强制隐藏下载按钮，显示等待提示
+        downloadBtn.style.display = "none";
+        waitingHint.style.display = "block";
 
         resultArea.scrollIntoView({behavior: "smooth"});
         document.getElementById("statusText").innerText = "🎉 制作成功！Excellent!";
         document.getElementById("statusText").style.color = "var(--rabbit-red)";
 
-        // 这里仅用于UI展示的延迟，文件其实已经生成好了
+        // 3. 延迟2秒后，隐藏等待提示，显示下载按钮
         setTimeout(() => {
-          document.getElementById("waitingHint").style.display = "none";
-          document.getElementById("downloadLink").style.display = "flex";
-        }, 1000);
+          waitingHint.style.display = "none";
+          downloadBtn.style.display = "flex"; // 使用flex以保持样式对齐
+          
+          // 可选：稍微滚动一下确保按钮可见
+          downloadBtn.scrollIntoView({behavior: "smooth", block: "center"});
+        }, 2000);
 
       } catch(e) {
         console.error(e);
