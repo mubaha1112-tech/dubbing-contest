@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>励步 - Firstleap Voice Magic (Chrome Edition)</title>
+  <title>励步 - Firstleap Voice Magic (Chrome V1)</title>
   <style>
     :root {
       --bg-cream: #F9F6E8;
@@ -268,8 +268,8 @@
       border: 4px solid #fff;
       object-fit: contain;
     }
+    video:fullscreen { border: none; border-radius: 0; width: 100%; height: 100%; }
     
-    /* 录制模式下强制隐藏 Video 原生控件 */
     body.recording-mode video::-webkit-media-controls { display: none !important; }
     body.recording-mode video::-webkit-media-controls-enclosure { display: none !important; }
 
@@ -284,8 +284,17 @@
       font-size: 13px; color: #e67e22; margin-top: 12px; background: #fff3e0; padding: 12px; border-radius: 15px;
       border: none; box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
     }
+    .headphone-tip {
+      margin: 8px 0 0 0;
+      background: #fff3e0;
+      color: #8b6a00;
+      padding: 10px 12px;
+      border-radius: 10px;
+      text-align: left;
+      font-size: 13px;
+    }
 
-    /* 录制时全屏 */
+    /* 录制时全屏（修复竖屏偏移） */
     body.recording-mode { overflow: hidden; background: #000; padding: 0; }
     body.recording-mode .container {
       max-width: 100%;
@@ -294,6 +303,8 @@
       padding: 10px;
       display: flex; flex-direction: column; align-items: center; background: #000;
     }
+    @supports (height: 100svh) { body.recording-mode .container { height: 100svh; } }
+
     body.recording-mode .step-label,
     body.recording-mode select,
     body.recording-mode #searchBtn,
@@ -302,21 +313,40 @@
     body.recording-mode .status-text,
     body.recording-mode h1 { display: none !important; }
     body.recording-mode #video-container {
-      margin: 0; width: 100%; display: flex; flex: 1;
-      flex-direction: column; align-items: center; justify-content: center;
+      margin: 0;
+      width: 100%;
+      display: flex;
+      flex: 1; 
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       background: #000;
     }
     body.recording-mode #mainVideo {
-      width: 100%; height: auto; max-height: 100%;
+      width: 100%;
+      height: auto;
+      max-height: 100%;
       border: none; box-shadow: none;
     }
     body.recording-mode #actionBtn { display: none; }
 
     /* 叠加覆盖层 */
     .record-overlay {
-      position: absolute; top: 8px; right: 8px; display: none; gap: 6px; z-index: 999;
+      position: absolute;
+      top: 8px; right: 8px;
+      display: none;
+      gap: 6px;
+      z-index: 999;
+      pointer-events: auto;
     }
-    .record-overlay .btn { padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 800; cursor: pointer; border: none; }
+    .record-overlay .btn {
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      border: none;
+    }
     .record-overlay .pause { background: #6c7dff; color: white; }
 
     /* 加载层 */
@@ -350,28 +380,52 @@
 
     body.welcome-active { overflow: hidden; }
 
-    /* 麦克风错误 */
-    #micErrorOverlay {
-      background: rgba(255, 82, 83, 0.95); font-family: sans-serif; padding: 30px; border-radius: 20px; max-width: 80%;
+    @media (prefers-reduced-motion: reduce) {
+      .welcome-screen, .welcome-title, .welcome-subtitle, .confetti, .welcome-cta { animation: none !important; }
     }
-    #micErrorOverlay .error-icon { font-size: 60px; margin-bottom: 10px; }
-    #micErrorOverlay .error-text { font-size: 18px; margin-top: 10px; color: white; opacity: 0.8; font-weight: normal; }
+    
+    #micErrorOverlay {
+      background: rgba(255, 82, 83, 0.95);
+      font-family: sans-serif;
+      padding: 30px;
+      border-radius: 20px;
+      max-width: 80%;
+    }
+    #micErrorOverlay .error-icon {
+      font-size: 60px;
+      margin-bottom: 10px;
+    }
+    #micErrorOverlay .error-text {
+      font-size: 18px;
+      margin-top: 10px;
+      color: white;
+      opacity: 0.8;
+      font-weight: normal;
+    }
 
-    /* 彩蛋专用动画 */
-    .monster-gift { font-size: 60px; animation: jumpHappy 1s infinite alternate; }
-    @keyframes jumpHappy { 0% { transform: translateY(0) rotate(-10deg); } 100% { transform: translateY(-20px) rotate(10deg); } }
+    /* 彩蛋专用动画样式 */
+    .monster-gift {
+      font-size: 60px;
+      animation: jumpHappy 1s infinite alternate;
+    }
+    @keyframes jumpHappy {
+      0% { transform: translateY(0) rotate(-10deg); }
+      100% { transform: translateY(-20px) rotate(10deg); }
+    }
   </style>
 </head>
 <body class="welcome-active">
-  <div id="welcome" class="welcome-screen">
-    <button class="welcome-skip" id="welcomeSkipBtn">跳过</button>
-    <video id="welcomeVideo" class="welcome-bgvideo" muted autoplay playsinline loop>
+  <div id="welcome" class="welcome-screen" role="dialog" aria-modal="true" aria-label="欢迎页">
+    <button class="welcome-skip" id="welcomeSkipBtn" aria-label="跳过">跳过</button>
+    <video id="welcomeVideo" class="welcome-bgvideo" muted autoplay playsinline loop preload="auto" x5-video-player-type="h5-page" aria-hidden="true">
       <source src="opener.mp4" type="video/mp4">
     </video>
     <div class="welcome-overlay">
       <div class="welcome-title">Firstleap Voice Magic</div>
-      <div class="welcome-subtitle">Chrome 特别版</div>
-      <div><button id="welcomeEnterBtn" class="welcome-cta">进入体验 ▶</button></div>
+      <div class="welcome-subtitle">配音秀 (Chrome Edition)</div>
+      <div>
+        <button id="welcomeEnterBtn" class="welcome-cta">进入体验 ▶</button>
+      </div>
     </div>
   </div>
 
@@ -379,7 +433,10 @@
     <div id="micErrorOverlay">
       <div class="error-icon">🚫</div>
       <div class="overlay-text">麦克风权限被拒绝！</div>
-      <div class="error-text">请点击浏览器地址栏左侧的“设置”图标，<br>**允许使用麦克风**后重试。</div>
+      <div class="error-text">
+        录音功能无法使用，请进入浏览器设置，<br>
+        **允许本网站访问您的麦克风**后重试。
+      </div>
       <button class="btn btn-retry" onclick="closeMicErrorHint()" style="width:160px; margin-top:20px; background:#fff; color:#FF5253; box-shadow:none;">我知道了</button>
     </div>
   </div>
@@ -391,42 +448,72 @@
 
   <div id="processing-overlay" class="overlay-fullscreen" style="background: rgba(50, 50, 50, 0.98);">
     <div style="font-size: 60px;">⚙️</div>
-    <div class="overlay-text">Chrome 正在封装视频...<br><span style="font-size:16px; opacity:0.8;">生成 .webm 格式</span></div>
-    <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="overlay-text">视频合成中...<br><span style="font-size:16px; opacity:0.8;">请勿关闭浏览器</span></div>
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
     <div style="color:white; margin-top:10px; font-weight:bold;" id="progressText">0%</div>
   </div>
 
   <!-- 彩蛋弹窗结构 -->
   <div id="eggOverlay" class="overlay-fullscreen" style="background: rgba(0,0,0,0.9); z-index: 100001;">
     <div style="font-size: 80px; margin-bottom: 20px;">🎉</div>
-    <div class="overlay-text" style="color: #FFD700; font-size: 28px;">恭喜你发现彩蛋！</div>
+    <div class="overlay-text" style="color: #FFD700; font-size: 28px; text-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);">
+      恭喜你发现彩蛋！
+    </div>
+    <div style="color: #fff; font-size: 18px; margin: 15px 0; opacity: 0.9;">
+      成功参加活动后，可另外获得传说中的奖励：
+    </div>
     <div style="display: flex; gap: 20px; margin: 20px 0;">
       <div class="monster-gift">👾</div>
       <div class="monster-gift" style="animation-delay: 0.1s">👾</div>
       <div class="monster-gift" style="animation-delay: 0.2s">👾</div>
     </div>
-    <button class="btn btn-primary" onclick="closeEggOverlay()" style="width: 200px;">太棒了！收下</button>
+    <div style="color: var(--monster-green); font-weight: bold; font-size: 24px; margin-bottom: 30px;">
+      3个魔怪 (3 Monsters)
+    </div>
+      <div style="margin-top: 10px; font-size: 20px; color: #fff;">
+        ( <span style="color: #FF4D4F;">‼️</span> 截图发给老师哦 <span style="color: #FF4D4F;">‼️</span> )
+    </div>
+    <button class="btn btn-primary" onclick="closeEggOverlay()" style="width: 200px; background: linear-gradient(135deg, #FF8E8E, #EE5253); box-shadow: none;">
+      太棒了！收下
+    </button>
   </div>
 
   <div class="container">
-    <h1>Firstleap Voice Magic<br><span style="font-size:18px; color:#888; font-weight:normal;">Chrome 专用版</span></h1>
+    <h1>Firstleap Voice Magic<br><span style="font-size:18px; color:#888; font-weight:normal;">Chrome V1</span></h1>
 
     <div class="step-label"><span class="step-badge">1</span>选择级别</div>
-    <select id="levelSelect" onchange="updateUnits()"><option value="">请选择级别 (Level)</option></select>
+    <select id="levelSelect" onchange="updateUnits()">
+      <option value="">请选择级别 (Level)</option>
+    </select>
 
     <div class="step-label"><span class="step-badge">2</span>选择单元</div>
-    <select id="unitSelect" disabled><option value="">请先选择级别</option></select>
+    <select id="unitSelect" disabled>
+      <option value="">请先选择级别</option>
+    </select>
 
     <button class="btn btn-primary" id="searchBtn" onclick="findVideo()">🎬 查找视频 Find Video</button>
 
-    <div id="video-container">
+    <div id="video-container" style="position: relative" >
       <div id="loaderOverlay" class="loader-overlay">
         <div class="spinner"></div>
         <div id="loadingText" style="color: #555; font-weight: bold;">加载中 Loading...</div>
       </div>
-      <video id="mainVideo" controls crossorigin="anonymous"><source src="" type="video/mp4"></video>
-      
-      <div id="recordOverlay" class="record-overlay">
+
+      <video id="mainVideo"
+             playsinline
+             webkit-playsinline
+             x5-playsinline
+             controls
+             controlsList="nodownload"
+             crossOrigin="anonymous" 
+             x5-video-player-type="h5-page">
+        <source src="" type="video/mp4">
+        您的浏览器不支持视频标签。
+      </video>
+
+      <div id="recordOverlay" class="record-overlay" aria-label="录制控制" style="display:none;">
         <button id="pauseToggleBtn" class="btn pause" onclick="togglePauseDuringRecording()">暂停</button>
       </div>
 
@@ -435,30 +522,83 @@
 
       <button class="btn btn-play" id="playBtn" onclick="togglePreview()">▶️ 预览原片 Preview</button>
       <button class="btn btn-record" id="actionBtn" onclick="toggleRecording()">🎙️ 准备就绪，开始配音</button>
-      <canvas id="processCanvas"></canvas>
+
+      <canvas id="processCanvas" style="display: none;"></canvas>
     </div>
 
     <div id="resultArea" class="preview-box">
-      <h3 style="color:var(--rabbit-red); margin-top:0;">🎉 配音完成！</h3>
-      <p style="font-size:12px; color:#999; margin-bottom:15px;">文件格式为 WebM (Chrome 原生支持)，可直接在电脑或安卓播放</p>
+      <h3 style="color:var(--rabbit-red); margin-top:0;">🎉 配音完成！Amazing!</h3>
+      <p style="font-size:12px; color:#999; margin-bottom:15px;">如果听不到声音，请检查设备音量</p>
 
-      <video id="previewVideo" style="width:100%; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1); background:#000;" controls></video>
+      <video id="previewVideo"
+             style="width:100%; border-radius:15px; box-shadow:0 5px 15px rgba(0,0,0,0.1); background:#000;"
+             controls
+             playsinline
+             webkit-playsinline
+             x5-playsinline></video>
 
       <div class="btn-group">
         <button class="btn btn-retry" onclick="resetRecording()">🔄 重录 Retry</button>
-        <!-- 标准下载链接，去除了复杂的兼容性判断 -->
-        <a id="downloadLink" class="btn btn-download">💾 下载视频 (.webm)</a>
+        <a id="downloadLink" class="btn btn-download" style="display: none;">💾 下载视频 (WebM)</a>
       </div>
 
       <div id="waitingHint" style="text-align: center; margin: 20px 0; display: none;">
-        <div class="spinner" style="border: 3px solid #f3f3f3; border-top: 3px solid var(--rabbit-red); width: 30px; height: 30px;"></div>
-        <span style="color: var(--pear-yellow); font-weight: bold;">处理中...</span>
+        <div class="spinner" style="border: 3px solid #f3f3f3; border-top: 3px solid var(--rabbit-red); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: inline-block; margin-right: 10px;"></div>
+        <span style="color: var(--pear-yellow); font-weight: bold;">请等待视频合成...</span>
+      </div>
+      
+      <div style="font-size:10px; color:#999; margin-top:15px; text-align:center;">
+        * 推荐使用 VLC 播放器观看下载的视频
       </div>
     </div>
   </div>
 
   <script>
-    // --- 数据区 (保持原样) ---
+    // 全屏欢迎动画控制
+    (function setupWelcome() {
+      const welcome = document.getElementById('welcome');
+      const wVideo = document.getElementById('welcomeVideo');
+      const skipBtn = document.getElementById('welcomeSkipBtn');
+      const enterBtn = document.getElementById('welcomeEnterBtn');
+
+      // 彩纸
+      const colors = ['#fff176', '#ff8a80', '#80d8ff', '#ffd180', '#ea80fc', '#a7ffeb'];
+      for (let i = 0; i < 18; i++) {
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        const size = 6 + Math.floor(Math.random() * 8);
+        const left = Math.random() * 100;
+        const delay = (Math.random() * 0.8).toFixed(2);
+        const dur = (2.2 + Math.random() * 2.2).toFixed(2);
+        c.style.left = left + 'vw';
+        c.style.background = colors[i % colors.length];
+        c.style.width = size + 'px';
+        c.style.height = (size + 4) + 'px';
+        c.style.animationDuration = dur + 's';
+        c.style.animationDelay = delay + 's';
+        welcome.appendChild(c);
+      }
+
+      const hideWelcome = () => {
+        if (welcome.classList.contains('hidden')) return;
+        welcome.classList.add('hidden');
+        document.body.classList.remove('welcome-active');
+        try { wVideo.pause(); } catch(e){}
+        setTimeout(() => {
+          welcome.style.display = 'none';
+        }, 650);
+      };
+
+      enterBtn.addEventListener('click', async () => {
+        await checkMicPermissionAndResumeAudio();
+        hideWelcome();
+      });
+
+      skipBtn.addEventListener('click', hideWelcome);
+      wVideo.addEventListener('error', hideWelcome, { once: true });
+      wVideo.loop = true;
+    })();
+
     const videoDatabase = {
       "K2A": [
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763011941537284494.mp4",
@@ -467,7 +607,7 @@
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763012048115b61f0f.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/2b63bb6d3c08490db6dd9d2b4fe656d7/teacher-homework/1763012051505623f0e.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/cc581b40f6b342ab8766ecb497b0593c/teacher-homework/17630120579742d4c02.mp4",
-        "","",""
+        "", "", ""
       ],
       "K2B": [
         "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/75c7beb9392e4cf9960c6eede634c52c/teacher-homework/17630120691122d5403.mp4",
@@ -476,7 +616,7 @@
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/176301780297880646f.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/17630178108970b8c1a.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/176301781737859c176.mp4",
-        "","",""
+        "", "", ""
       ],
       "K3A": [
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/17630178328878ac20f.mp4",
@@ -485,7 +625,7 @@
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/1764160538592e2c49d.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/63972810b527498d9402d45faea7bf43/teacher-homework/17630179827650c9812.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/00a0f094ef8244389261d996abd604b4/teacher-homework/1763017985597814ea5.mp4",
-        "","",""
+        "", "", ""
       ],
       "K3B": [
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763018186532db70f3.mp4",
@@ -494,7 +634,7 @@
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763018193813bf765d.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763018196433b9f19e.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763018210633b0c5c5.mp4",
-        "","",""
+        "", "", ""
       ],
       "G0": [
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/17630182202811ca8fd.mp4",
@@ -544,7 +684,7 @@
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/176302225764940fec6.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/1764157788986ab1382.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/1764157791475e09b7e.mp4",
-        "","",""
+        "", "", ""
       ],
       "G3A": [
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/1764160084181f102c7.mp4",
@@ -553,14 +693,14 @@
         "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/fdceaef6e31e4c638822a048c10725f8/teacher-homework/1764160089326b7fb73.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/17641600922812b7bff.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/a8c7a19a8cba42edaf6986b94969b197/teacher-homework/176416009474092babe.mp4",
-        "","",""
+        "", "", ""
       ],
       "G3B": [
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/176302346811779ef05.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/176302347129269b324.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763023473567337000.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763023475693e477da.mp4",
-        "","","","",""
+        "", "", "", "", ""
       ],
       "G4A": [
         "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/c03eed96e6704a3f9e2e69aa87c5d129/teacher-homework/1763023607589e0edf8.mp4",
@@ -569,7 +709,7 @@
         "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/b2f0f75f1b734391a001882ca73c60cb/teacher-homework/17630236219657ae294.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251126/1764158042333492fc3.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763023992804c614a5.mp4",
-        "","",""
+        "", "", ""
       ],
       "G4B": [
         "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/ea4be2c59c024dea923d9806e1f7250a/teacher-homework/176302071175214eb09.mp4",
@@ -578,11 +718,10 @@
         "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/febd1d55be274f3e911b4cc9aa9d7f88/teacher-homework/176302072522770462f.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/22a7ca3d786c495c96226e04473035cd/teacher-homework/176302072735125fd25.mp4",
         "https://file-aliyun.firstleap.cn/homework/teacher/transcoded/9c4b0954c98c4568a47cd7078e27cc6f/teacher-homework/176302072937414367d.mp4",
-        "","",""
+        "", "", ""
       ]
     };
 
-    // --- 核心变量 ---
     let mediaRecorder;
     let recordedChunks = [];
     let audioCtx = null;
@@ -595,21 +734,20 @@
     let micGainNode = null;
     let videoGainNode = null;
     let isRecording = false;
-    let isIntroMode = false;
-    let introImageObj = null;
+    let recordedMimeType = '';
     let animationFrameId = null;
     let hasMicPermission = false;
     
-    // 进度
+    let isIntroMode = false;
+    let introImageObj = null;
+
     let processingInterval = null;
     let processingProgress = 0;
 
-    // 结果
     let finalBlob = null;
     let finalObjectURL = '';
     let finalFilename = '';
 
-    // AudioContext
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     function initializeAudioContext() {
       if (!audioCtx || audioCtx.state === 'closed') {
@@ -620,10 +758,9 @@
     async function checkMicPermissionAndResumeAudio() {
       initializeAudioContext();
       if (audioCtx.state === 'suspended') {
-        try { await audioCtx.resume(); } catch(e) { console.warn("Resume failed", e); }
+        try { await audioCtx.resume(); } catch(e) { console.warn("AudioContext resume failed:", e); }
       }
       if (hasMicPermission && micStream) return true;
-
       try {
         micStream = await navigator.mediaDevices.getUserMedia({
           audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
@@ -634,49 +771,25 @@
       } catch (err) {
         console.error("Mic Error:", err);
         hasMicPermission = false;
-        document.getElementById('micAuthErrorOverlay').style.display = 'flex';
+        showMicErrorHint();
         return false;
       }
     }
-    function closeMicErrorHint() { document.getElementById('micAuthErrorOverlay').style.display = 'none'; }
 
-    // --- 欢迎页逻辑 ---
-    (function setupWelcome() {
-      const welcome = document.getElementById('welcome');
-      const wVideo = document.getElementById('welcomeVideo');
-      const skipBtn = document.getElementById('welcomeSkipBtn');
-      const enterBtn = document.getElementById('welcomeEnterBtn');
-      
-      const colors = ['#fff176', '#ff8a80', '#80d8ff', '#ffd180', '#ea80fc', '#a7ffeb'];
-      for (let i = 0; i < 20; i++) {
-        const c = document.createElement('div');
-        c.className = 'confetti';
-        c.style.left = Math.random() * 100 + 'vw';
-        c.style.background = colors[i % colors.length];
-        c.style.animationDelay = Math.random() + 's';
-        welcome.appendChild(c);
-      }
+    function showMicErrorHint() {
+      document.getElementById('micAuthErrorOverlay').style.display = 'flex';
+    }
+    function closeMicErrorHint() {
+      document.getElementById('micAuthErrorOverlay').style.display = 'none';
+    }
 
-      const hideWelcome = () => {
-        welcome.classList.add('hidden');
-        document.body.classList.remove('welcome-active');
-        try { wVideo.pause(); } catch(e){}
-        setTimeout(() => welcome.style.display = 'none', 650);
-      };
-
-      enterBtn.addEventListener('click', async () => {
-        await checkMicPermissionAndResumeAudio();
-        hideWelcome();
-      });
-      skipBtn.addEventListener('click', hideWelcome);
-      wVideo.addEventListener('error', hideWelcome);
-    })();
-
-    // --- 业务逻辑 ---
     const levels = Object.keys(videoDatabase);
     const levelSelect = document.getElementById("levelSelect");
     levels.forEach(lvl => {
-      let option = document.createElement("option"); option.value = lvl; option.text = lvl; levelSelect.appendChild(option);
+      let option = document.createElement("option");
+      option.value = lvl;
+      option.text = lvl;
+      levelSelect.appendChild(option);
     });
 
     function updateUnits() {
@@ -687,13 +800,15 @@
 
       if (lvl && videoDatabase[lvl]) {
         let hasUnits = false;
-        videoDatabase[lvl].forEach((url, i) => {
-          if (url) {
-            let option = document.createElement("option"); option.value = i; option.text = "Unit " + (i + 1);
+        for (let i = 0; i < videoDatabase[lvl].length; i++) {
+          if (videoDatabase[lvl][i] && videoDatabase[lvl][i] !== "") {
+            let option = document.createElement("option");
+            option.value = i;
+            option.text = "Unit " + (i + 1);
             unitSelect.appendChild(option);
             hasUnits = true;
           }
-        });
+        }
         if(hasUnits) unitSelect.disabled = false;
       }
     }
@@ -701,82 +816,173 @@
     function findVideo() {
       const lvl = document.getElementById("levelSelect").value;
       const unitIndex = document.getElementById("unitSelect").value;
+      const videoContainer = document.getElementById("video-container");
       const videoPlayer = document.getElementById("mainVideo");
-      
-      if (!lvl || unitIndex === "") { alert("请先选择级别和单元！"); return; }
+      const loader = document.getElementById("loaderOverlay");
+      const actionBtn = document.getElementById("actionBtn");
+      const playBtn = document.getElementById("playBtn");
+
+      if (!lvl || unitIndex === "") {
+        alert("请先选择级别和单元！");
+        return;
+      }
 
       const url = videoDatabase[lvl][unitIndex];
       document.getElementById("resultArea").style.display = "none";
-      document.getElementById("actionBtn").style.display = "none"; // 加载完成前隐藏
-      document.getElementById("video-container").style.display = "block";
-      document.getElementById("loaderOverlay").style.display = "flex";
+      actionBtn.style.display = "none";
+      actionBtn.className = "btn btn-record";
+      actionBtn.innerHTML = "🎙️ 准备就绪，开始配音";
+      playBtn.style.display = "none";
+      videoContainer.style.display = "block";
+      loader.style.display = "flex";
 
       videoPlayer.src = url;
       videoPlayer.load();
-      videoPlayer.onprogress = () => {
-         if(videoPlayer.buffered.length > 0) {
-            const pct = Math.floor((videoPlayer.buffered.end(0) / videoPlayer.duration) * 100);
-            document.getElementById("loadingText").innerText = "Loading " + pct + "%";
-         }
+      videoPlayer.volume = 1.0;
+      videoPlayer.controls = true;
+
+      videoPlayer.onprogress = function() {
+        if (videoPlayer.buffered.length > 0) {
+          const duration = videoPlayer.duration;
+          const buffered = videoPlayer.buffered.end(0);
+          if (duration > 0) {
+            const percent = Math.min(100, Math.floor((buffered / duration) * 100));
+            document.getElementById("loadingText").innerText = "视频缓冲中 " + percent + "%";
+          }
+        }
       };
-      videoPlayer.oncanplaythrough = () => {
-        document.getElementById("loaderOverlay").style.display = "none";
-        document.getElementById("actionBtn").style.display = "block";
-        document.getElementById("playBtn").style.display = "block";
-        document.getElementById("statusText").innerText = "✅ 视频加载完毕";
+
+      videoPlayer.oncanplaythrough = function() {
+        loader.style.display = "none";
+        actionBtn.style.display = "block";
+        playBtn.style.display = "block";
+        document.getElementById("statusText").innerText = "✅ 视频加载完毕，可先预览，或直接配音";
+        
         const canvas = document.getElementById("processCanvas");
-        canvas.width = videoPlayer.videoWidth;
-        canvas.height = videoPlayer.videoHeight;
+        canvas.width = videoPlayer.videoWidth || 640;
+        canvas.height = videoPlayer.videoHeight || 360;
       };
-      videoPlayer.onerror = () => {
-        alert("视频加载失败，请检查网络");
-        document.getElementById("loaderOverlay").style.display = "none";
+
+      videoPlayer.onended = function() {
+        if(!isRecording) {
+          playBtn.innerHTML = "▶️ 预览原片 Preview";
+        }
       };
-      document.getElementById("video-container").scrollIntoView({behavior: "smooth"});
+
+      videoPlayer.onplay = function() {
+        if (!isRecording) playBtn.innerHTML = "⏸️ 暂停播放 Pause";
+      };
+
+      videoPlayer.onpause = function() {
+        if (!isRecording) playBtn.innerHTML = "▶️ 预览原片 Preview";
+      };
+
+      videoPlayer.onerror = function() {
+        loader.style.display = "none";
+        alert("视频加载失败！");
+      };
+
+      videoContainer.scrollIntoView({behavior: "smooth"});
     }
 
     function togglePreview() {
       const video = document.getElementById("mainVideo");
-      video.paused ? video.play() : video.pause();
+      if (video.paused) {
+        video.volume = 1.0;
+        video.muted = false;
+        video.play();
+      } else {
+        video.pause();
+      }
     }
 
-    // --- Chrome 专属配置 ---
-    // 强制使用 WebM，因为 MP4 在 Chrome 录制中经常出现 duration 缺失导致下载后无法播放
-    function getBestMimeTypeForChrome() {
+    function resetRecording() {
+      document.getElementById("resultArea").style.display = "none";
+      const actionBtn = document.getElementById("actionBtn");
+      actionBtn.style.display = "block";
+      actionBtn.className = "btn btn-record";
+      actionBtn.innerHTML = "🎙️ 准备就绪，开始配音";
+      actionBtn.disabled = false;
+      document.getElementById("playBtn").style.display = "block";
+      document.getElementById("playBtn").innerHTML = "▶️ 预览原片 Preview";
+      document.getElementById("statusText").innerText = "🔄 已重置，请点击按钮再次配音";
+
+      const mainVideo = document.getElementById("mainVideo");
+      mainVideo.currentTime = 0;
+      mainVideo.pause();
+      mainVideo.controls = true;
+
+      const preview = document.getElementById("previewVideo");
+      if(preview.src) {
+        URL.revokeObjectURL(preview.src);
+        preview.src = "";
+      }
+      finalBlob = null;
+      if (finalObjectURL) {
+        URL.revokeObjectURL(finalObjectURL);
+        finalObjectURL = '';
+      }
+      finalFilename = '';
+
+      document.getElementById("video-container").scrollIntoView({behavior: "smooth"});
+      const overlay = document.getElementById('recordOverlay');
+      if (overlay) overlay.style.display = 'none';
+    }
+
+    // 针对 Chrome 优化 MIME 类型选择：强制 WebM 以修复 1秒 时长问题
+    function getBestMimeType() {
       const types = [
-        "video/webm;codecs=vp9",
+        "video/webm;codecs=vp9", 
         "video/webm;codecs=vp8",
-        "video/webm"
+        "video/webm",
+        "video/mp4" 
       ];
       for (const type of types) {
-        if (MediaRecorder.isTypeSupported(type)) {
-          console.log("Chrome Selected MIME:", type);
+        if (MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
+          console.log("Using MIME type:", type);
           return type;
         }
       }
-      return ""; // 如果都不支持，这里会报错，但 Chrome 肯定支持 webm
+      return 'video/webm'; 
     }
 
     function toggleRecording() {
-      isRecording ? stopRecording() : prepareAndStartRecording();
+      if (isRecording) {
+        stopRecording();
+      } else {
+        prepareAndStartRecording();
+      }
     }
 
     async function prepareAndStartRecording() {
       const video = document.getElementById("mainVideo");
-      if (video.readyState < 2) { alert("请等待视频加载"); return; }
-      if (!await checkMicPermissionAndResumeAudio()) return;
+      if (video.readyState < 2) {
+        alert("请等待视频加载完毕");
+        return;
+      }
+
+      const permissionGranted = await checkMicPermissionAndResumeAudio();
+      if (!permissionGranted) return;
 
       video.controls = false;
+
       const overlay = document.getElementById('countdown-overlay');
       const text = document.getElementById('countdownText');
       let count = 3;
       overlay.style.display = 'flex';
       text.innerText = count;
+      text.style.animation = 'none';
+      void text.offsetHeight;
+      text.style.animation = 'popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
 
       const timer = setInterval(() => {
         count--;
-        if (count > 0) text.innerText = count;
-        else {
+        if (count > 0) {
+          text.innerText = count;
+          text.style.animation = 'none';
+          void text.offsetHeight;
+          text.style.animation = 'popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        } else {
           clearInterval(timer);
           text.innerText = "GO!";
           setTimeout(() => {
@@ -790,8 +996,8 @@
 
     function enterFullscreenMode() {
       document.body.classList.add('recording-mode');
-      const el = document.documentElement;
-      if (el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+      const docElm = document.documentElement;
+      if (docElm.requestFullscreen) docElm.requestFullscreen().catch(()=>{});
     }
 
     function exitFullscreenMode() {
@@ -803,211 +1009,383 @@
       const video = document.getElementById("mainVideo");
       const canvas = document.getElementById("processCanvas");
       const ctx = canvas.getContext("2d");
-      
+      const status = document.getElementById("statusText");
+      const actionBtn = document.getElementById("actionBtn");
+
+      video.controls = false;
+
       if (audioCtx.state === 'suspended') await audioCtx.resume();
 
-      // 1. 设置 Canvas 流
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
+
       try {
-        canvasStream = canvas.captureStream(30); // 30fps
+        canvasStream = canvas.captureStream(30); // 增加帧率
       } catch(e) {
-        alert("浏览器不支持捕获流"); return;
+        alert("画面捕获失败，请尝试更新浏览器。");
+        return;
       }
 
-      // 2. 音频混合
+      const canvasVideoTrack = canvasStream.getVideoTracks()[0];
+      
       dest = audioCtx.createMediaStreamDestination();
       micGainNode = audioCtx.createGain();
       videoGainNode = audioCtx.createGain();
       
-      // 初始静音，避免 Intro 噪音
       micGainNode.gain.value = 0; 
       videoGainNode.gain.value = 0;
 
-      if (micStream) {
+      if (micStream && micStream.getAudioTracks().length > 0) {
         sourceMic = audioCtx.createMediaStreamSource(micStream);
         sourceMic.connect(micGainNode);
         micGainNode.connect(dest);
       }
-      
-      // 视频音频源
-      if (!video._elementAudioSource) {
-         try {
-           video._elementAudioSource = audioCtx.createMediaElementSource(video);
-         } catch(e) { console.warn("Element source already exists or CORS issue"); }
-      }
-      if (video._elementAudioSource) {
-         sourceVideo = video._elementAudioSource;
-         sourceVideo.connect(videoGainNode);
-         videoGainNode.connect(dest);
-         dest.connect(audioCtx.destination); // 监听
-      }
 
-      // 3. 组合流
-      const combinedStream = new MediaStream([
-        canvasStream.getVideoTracks()[0],
-        dest.stream.getAudioTracks()[0] || micStream.getAudioTracks()[0]
-      ]);
-
-      // 4. MediaRecorder 配置 (WebM 专用)
-      const mimeType = getBestMimeTypeForChrome();
-      recordedChunks = [];
       try {
-        mediaRecorder = new MediaRecorder(combinedStream, {
-          mimeType: mimeType,
-          videoBitsPerSecond: 2500000 // 2.5 Mbps
+        if (!video._elementAudioSource) {
+          video._elementAudioSource = audioCtx.createMediaElementSource(video);
+        }
+        sourceVideo = video._elementAudioSource;
+        sourceVideo.connect(videoGainNode);
+        videoGainNode.connect(dest);
+        dest.connect(audioCtx.destination);
+      } catch (e) {
+        console.warn("Audio routing error", e);
+      }
+
+      const mixedAudioTrack = dest.stream.getAudioTracks()[0];
+      let combinedStream;
+      if (mixedAudioTrack) {
+        combinedStream = new MediaStream([canvasVideoTrack, mixedAudioTrack]);
+      } else {
+        const micTrack = micStream && micStream.getAudioTracks().length > 0 ? micStream.getAudioTracks()[0] : null;
+        if (micTrack) combinedStream = new MediaStream([canvasVideoTrack, micTrack]);
+      }
+
+      recordedMimeType = getBestMimeType();
+      try {
+        // 去除 timeslice 参数以确保 WebM 在 Chrome 中正确生成 Header
+        mediaRecorder = new MediaRecorder(combinedStream, { 
+            mimeType: recordedMimeType, 
+            videoBitsPerSecond: 2500000 
         });
-      } catch(e) { alert("Recorder init error"); return; }
+      } catch (e) {
+        alert("MediaRecorder初始化失败。");
+        return;
+      }
 
-      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
-      mediaRecorder.onstop = generateResult;
+      recordedChunks = [];
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+      };
 
-      // 5. 启动流程
+      mediaRecorder.onstop = () => {
+        if (recordedChunks.length === 0) {
+          alert("录制失败：数据为空。");
+          resetRecording();
+          return;
+        }
+        finishProcessingOverlayThen(() => generateVideoAndShowResult());
+      };
+
+      document.getElementById("playBtn").style.display = "none";
+      actionBtn.innerHTML = "⏹️ 完成配音 Stop";
+      actionBtn.className = "btn btn-stop";
+      const overlay = document.getElementById('recordOverlay');
+      if (overlay) overlay.style.display = 'flex';
+      const pauseBtn = document.getElementById('pauseToggleBtn');
+      if (pauseBtn) pauseBtn.textContent = '暂停';
+
       introImageObj = new Image();
       introImageObj.crossOrigin = "anonymous";
       introImageObj.src = "intro.png";
 
-      const start = () => {
-        // 关键：使用 1000ms 切片，保证数据不断流
-        mediaRecorder.start(1000); 
-        isRecording = true;
-        isIntroMode = true;
-        drawToCanvas(video, ctx, canvas);
-        
-        document.getElementById("actionBtn").innerHTML = "⏹️ 完成配音 Stop";
-        document.getElementById("actionBtn").className = "btn btn-stop";
-        document.getElementById("recordOverlay").style.display = "flex";
-        document.getElementById("statusText").innerText = "🎬 Intro...";
+      const startRecorderAndDraw = () => {
+          try {
+              mediaRecorder.start(); // Chrome 录制不要切片，保证时长元数据正常
+          } catch(e) {
+              alert("录制启动失败"); return;
+          }
 
-        setTimeout(() => {
-          isIntroMode = false;
-          // 开启音量
-          micGainNode.gain.value = 1.5;
-          videoGainNode.gain.value = 1.0;
-          
-          video.currentTime = 0;
-          video.controls = false;
-          video.play().then(() => {
-            document.getElementById("statusText").innerText = "🔴 Recording...";
-          });
-          video.onended = stopRecording;
-        }, 3000);
+          isRecording = true;
+          isIntroMode = true;
+          status.innerText = "🎬 Intro 播放中...";
+          status.style.color = "var(--pear-yellow)";
+
+          drawToCanvas(video, ctx, canvas);
+
+          setTimeout(() => {
+              if(!isRecording) return; // 如果用户中途停止
+
+              isIntroMode = false; 
+              
+              micGainNode.gain.value = 1.5;
+              videoGainNode.gain.value = 1.2;
+              
+              video.currentTime = 0;
+              video.volume = 1.0;
+              video.controls = false; 
+              
+              video.play().then(() => {
+                 status.innerText = "🔴 录制中 (Recording)...";
+                 status.style.color = "#FF0000";
+              }).catch((e) => {
+                 console.error("Play failed:", e);
+              });
+              
+              video.onended = stopRecording;
+          }, 3000);
       };
 
-      introImageObj.onload = start;
-      introImageObj.onerror = start; // Skip intro if missing
+      introImageObj.onload = () => { startRecorderAndDraw(); };
+      introImageObj.onerror = () => { 
+          isIntroMode = false;
+          startRecorderAndDraw();
+      };
     }
 
     function drawToCanvas(video, ctx, canvas) {
-      if (!isRecording) { cancelAnimationFrame(animationFrameId); return; }
+      if (!isRecording) {
+        cancelAnimationFrame(animationFrameId);
+        return;
+      }
       
       try {
         if (isIntroMode) {
-          ctx.fillStyle = "#000";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          if (introImageObj) ctx.drawImage(introImageObj, 0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            if (introImageObj) {
+                ctx.drawImage(introImageObj, 0, 0, canvas.width, canvas.height);
+            }
         } else {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            if (video.readyState >= 2 && !video.ended) {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            }
         }
-      } catch(e) {
-        console.error(e);
-        stopRecording(); return;
+      } catch (e) {
+        isRecording = false;
+        exitFullscreenMode();
+        alert("录制中断：跨域限制。");
+        stopRecording();
+        return;
       }
+      
       animationFrameId = requestAnimationFrame(() => drawToCanvas(video, ctx, canvas));
     }
 
     function stopRecording() {
       if (!mediaRecorder || mediaRecorder.state === "inactive") return;
+
       isRecording = false;
-      document.getElementById("mainVideo").pause();
+      isIntroMode = false; 
+      cancelAnimationFrame(animationFrameId);
       exitFullscreenMode();
-      
-      document.getElementById("processing-overlay").style.display = 'flex';
-      simulateProgress();
 
-      mediaRecorder.stop();
+      const video = document.getElementById("mainVideo");
+      const actionBtn = document.getElementById("actionBtn");
+      video.pause();
+      video.controls = true; 
+
+      const overlay = document.getElementById('recordOverlay');
+      if (overlay) overlay.style.display = 'none';
+
+      actionBtn.disabled = true;
+      beginProcessingOverlay();
+
+      try { mediaRecorder.stop(); } catch(e) {}
+
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        videoStream = null;
+      }
+      if (canvasStream) {
+        canvasStream.getTracks().forEach(track => track.stop());
+        canvasStream = null;
+      }
+      if (audioCtx) {
+        if(sourceMic) { try { sourceMic.disconnect(); } catch(e){} }
+        if(sourceVideo) { try { sourceVideo.disconnect(); } catch(e){} }
+        if(micGainNode) { try { micGainNode.disconnect(); } catch(e){} }
+        if(videoGainNode) { try { videoGainNode.disconnect(); } catch(e){} }
+        if(dest) { try { dest.disconnect(); } catch(e){} }
+      }
       
-      // Cleanup streams
-      if(canvasStream) canvasStream.getTracks().forEach(t=>t.stop());
-      // 保持 micStream 活跃以便重录
+      actionBtn.innerHTML = "🎙️ 准备就绪，开始配音";
+      actionBtn.className = "btn btn-record";
+      document.getElementById("statusText").innerText = "✨ 视频生成中，请稍候...";
+      document.getElementById("statusText").style.color = "var(--pear-yellow)";
     }
 
-    function simulateProgress() {
-       processingProgress = 0;
-       const bar = document.getElementById("progressBar");
-       const txt = document.getElementById("progressText");
-       processingInterval = setInterval(() => {
-          if (processingProgress < 95) {
-             processingProgress += 2;
-             bar.style.width = processingProgress + "%";
-             txt.innerText = processingProgress + "%";
-          }
-       }, 50);
+    function beginProcessingOverlay() {
+      const overlay = document.getElementById('processing-overlay');
+      const bar = document.getElementById('progressBar');
+      const text = document.getElementById('progressText');
+      overlay.style.display = 'flex';
+      processingProgress = 0;
+      bar.style.width = '0%';
+      text.innerText = '0%';
+
+      if (processingInterval) clearInterval(processingInterval);
+      processingInterval = setInterval(() => {
+        if (processingProgress < 90) {
+          const step = Math.max(1, Math.round((90 - processingProgress) / 12));
+          processingProgress = Math.min(90, processingProgress + step);
+          bar.style.width = processingProgress + '%';
+          text.innerText = processingProgress + '%';
+        }
+      }, 120);
     }
 
-    function generateResult() {
-      clearInterval(processingInterval);
-      document.getElementById("progressBar").style.width = "100%";
-      document.getElementById("progressText").innerText = "100%";
-      
-      setTimeout(() => {
-        document.getElementById("processing-overlay").style.display = "none";
-        
-        // 生成 Blob (Chrome WebM)
-        if (recordedChunks.length === 0) { alert("录制数据为空"); return; }
-        const type = mediaRecorder.mimeType || 'video/webm';
-        finalBlob = new Blob(recordedChunks, { type: type });
+    function finishProcessingOverlayThen(callback) {
+      const overlay = document.getElementById('processing-overlay');
+      const bar = document.getElementById('progressBar');
+      const text = document.getElementById('progressText');
+      if (processingInterval) {
+        clearInterval(processingInterval);
+        processingInterval = null;
+      }
+      const stepper = setInterval(() => {
+        processingProgress = Math.min(100, processingProgress + 4);
+        bar.style.width = processingProgress + '%';
+        text.innerText = processingProgress + '%';
+        if (processingProgress >= 100) {
+          clearInterval(stepper);
+          overlay.style.display = 'none';
+          if (typeof callback === 'function') callback();
+        }
+      }, 30);
+    }
+
+    function generateVideoAndShowResult() {
+      if(recordedChunks.length === 0) {
+        alert("录制失败：数据为空。");
+        return;
+      }
+
+      try {
+        const type = recordedMimeType || 'video/webm';
+        finalBlob = new Blob(recordedChunks, { type });
         finalObjectURL = URL.createObjectURL(finalBlob);
 
-        // 设置预览
         const preview = document.getElementById("previewVideo");
         preview.src = finalObjectURL;
+        preview.muted = false;
+        preview.volume = 1.0;
+
+        const downloadBtn = document.getElementById("downloadLink");
+        // Chrome 优先使用 webm
+        let ext = '.webm';
+        if (type.includes('mp4')) ext = '.mp4';
         
-        // 设置下载
-        const dlBtn = document.getElementById("downloadLink");
-        finalFilename = `Firstleap_Voice_${Date.now()}.webm`; // 强制使用 .webm
-        dlBtn.href = finalObjectURL;
-        dlBtn.download = finalFilename;
+        finalFilename = `Firstleap_Voice_${Date.now()}${ext}`;
 
-        // UI 切换
-        document.getElementById("video-container").style.display = "none";
-        document.getElementById("resultArea").style.display = "block";
-        document.getElementById("waitingHint").style.display = "none";
-        document.getElementById("downloadLink").style.display = "flex";
-      }, 500);
-    }
+        setupSaveButton(downloadBtn);
 
-    function resetRecording() {
-      document.getElementById("resultArea").style.display = "none";
-      document.getElementById("video-container").style.display = "block";
-      const btn = document.getElementById("actionBtn");
-      btn.innerHTML = "🎙️ 准备就绪，开始配音";
-      btn.className = "btn btn-record";
-      btn.style.display = "block";
-      document.getElementById("mainVideo").controls = true;
-      document.getElementById("statusText").innerText = "";
-      if (finalObjectURL) URL.revokeObjectURL(finalObjectURL);
-    }
-    
-    function togglePauseDuringRecording() {
-       const v = document.getElementById("mainVideo");
-       const b = document.getElementById("pauseToggleBtn");
-       if(v.paused) { v.play(); b.innerText = "暂停"; }
-       else { v.pause(); b.innerText = "继续"; }
-    }
+        document.getElementById("actionBtn").style.display = "none";
 
-    /* 彩蛋逻辑 */
-    let titleClickCount = 0;
-    let titleTimer = null;
-    document.querySelector('h1').addEventListener('click', () => {
-      titleClickCount++;
-      if (titleClickCount === 1) titleTimer = setTimeout(() => titleClickCount = 0, 2000);
-      if (titleClickCount === 3) {
-        document.getElementById('eggOverlay').style.display = 'flex';
-        clearTimeout(titleTimer); titleClickCount = 0;
+        const resultArea = document.getElementById("resultArea");
+        resultArea.style.display = "block";
+
+        document.getElementById("waitingHint").style.display = "block";
+        document.getElementById("downloadLink").style.display = "none";
+
+        resultArea.scrollIntoView({behavior: "smooth"});
+        document.getElementById("statusText").innerText = "🎉 制作成功！Excellent!";
+        document.getElementById("statusText").style.color = "var(--rabbit-red)";
+
+        setTimeout(() => {
+          document.getElementById("waitingHint").style.display = "none";
+          document.getElementById("downloadLink").style.display = "flex";
+        }, 2000);
+
+      } catch(e) {
+        console.error(e);
+        alert("视频生成出错，请重试");
       }
-    });
-    function closeEggOverlay() { document.getElementById('eggOverlay').style.display = 'none'; }
+    }
+
+    function setupSaveButton(downloadBtn) {
+      downloadBtn.textContent = "💾 下载视频 (Download)";
+      downloadBtn.href = finalObjectURL;
+      downloadBtn.download = finalFilename;
+      downloadBtn.target = "_blank";
+    }
+
+    function togglePauseDuringRecording() {
+      const video = document.getElementById("mainVideo");
+      const btn = document.getElementById("pauseToggleBtn");
+      if (!video) return;
+
+      if (video.paused) {
+        video.play().catch(() => {});
+        btn.textContent = '暂停';
+      } else {
+        video.pause();
+        btn.textContent = '继续';
+      }
+    }
+
+    /* --- 彩蛋逻辑 --- */
+    let titleClickCount = 0;
+    let titleClickTimer = null;
+
+    function initEasterEgg() {
+      const titleElement = document.querySelector('h1');
+      if (!titleElement) return;
+
+      titleElement.addEventListener('click', function() {
+        titleClickCount++;
+        if (titleClickCount === 1) {
+          titleClickTimer = setTimeout(() => {
+            titleClickCount = 0;
+          }, 2000);
+        }
+        if (titleClickCount === 3) {
+          showEggOverlay();
+          titleClickCount = 0;
+          clearTimeout(titleClickTimer);
+        }
+      });
+      
+      titleElement.style.cursor = "pointer";
+      titleElement.style.userSelect = "none"; 
+      titleElement.style.webkitUserSelect = "none";
+    }
+
+    function showEggOverlay() {
+      const egg = document.getElementById('eggOverlay');
+      if(egg) {
+        egg.style.display = 'flex';
+        playEggSound();
+      }
+    }
+
+    function closeEggOverlay() {
+      const egg = document.getElementById('eggOverlay');
+      if(egg) egg.style.display = 'none';
+    }
+
+    function playEggSound() {
+      try {
+        initializeAudioContext();
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+      } catch(e) {}
+    }
+
+    document.addEventListener('DOMContentLoaded', initEasterEgg);
+
   </script>
 </body>
 </html>
