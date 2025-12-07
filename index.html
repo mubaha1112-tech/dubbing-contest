@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>励步 - Firstleap Voice Magic (Chrome Fix)</title>
+  <title>励步 - Firstleap Voice Magic (Pro Fix)</title>
   <style>
     :root {
       --bg-cream: #F9F6E8;
@@ -433,7 +433,7 @@
     </video>
     <div class="welcome-overlay">
       <div class="welcome-title">Firstleap Voice Magic</div>
-      <div class="welcome-subtitle">配音秀 (Chrome Fix V2)</div>
+      <div class="welcome-subtitle">配音秀 (Pro Fix V3)</div>
       <div>
         <button id="welcomeEnterBtn" class="welcome-cta">进入体验 ▶</button>
       </div>
@@ -492,7 +492,7 @@
   </div>
 
   <div class="container">
-    <h1>Firstleap Voice Magic<br><span style="font-size:18px; color:#888; font-weight:normal;">Chrome Fix</span></h1>
+    <h1>Firstleap Voice Magic<br><span style="font-size:18px; color:#888; font-weight:normal;">Pro Fix</span></h1>
 
     <div class="step-label"><span class="step-badge">1</span>选择级别</div>
     <select id="levelSelect" onchange="updateUnits()">
@@ -555,7 +555,7 @@
 
       <div id="waitingHint" style="text-align: center; margin: 20px 0; display: none;">
         <div class="spinner" style="border: 3px solid #f3f3f3; border-top: 3px solid var(--rabbit-red); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: inline-block; margin-right: 10px;"></div>
-        <span style="color: var(--pear-yellow); font-weight: bold;">请等待视频合成...</span>
+        <span style="color: var(--pear-yellow); font-weight: bold;">视频封装中...</span>
       </div>
       
       <div style="font-size:10px; color:#999; margin-top:15px; text-align:center;">
@@ -868,6 +868,8 @@
       videoPlayer.load();
       videoPlayer.volume = 1.0;
       videoPlayer.controls = true;
+      // 移除旧的监听器
+      videoPlayer.onended = null;
 
       videoPlayer.onprogress = function() {
         if (videoPlayer.buffered.length > 0) {
@@ -891,6 +893,7 @@
         canvas.height = videoPlayer.videoHeight || 360;
       };
       
+      // 预览时的行为
       videoPlayer.onended = function() {
         if(currentState !== AppState.RECORDING) {
           playBtn.innerHTML = "▶️ 预览原片 Preview";
@@ -933,7 +936,7 @@
       actionBtn.className = "btn btn-record";
       actionBtn.innerHTML = "🎙️ 准备就绪，开始配音";
       actionBtn.disabled = false;
-      actionBtn.onclick = startSequence; // 恢复开始函数
+      actionBtn.onclick = startSequence; 
 
       document.getElementById("playBtn").style.display = "block";
       document.getElementById("playBtn").innerHTML = "▶️ 预览原片 Preview";
@@ -944,6 +947,12 @@
       mainVideo.pause();
       mainVideo.controls = true;
       mainVideo.volume = 1.0;
+      // 重置 onended，防止污染预览逻辑
+      mainVideo.onended = function() {
+        if(currentState !== AppState.RECORDING) {
+          document.getElementById("playBtn").innerHTML = "▶️ 预览原片 Preview";
+        }
+      };
 
       const preview = document.getElementById("previewVideo");
       if(preview.src) {
@@ -956,12 +965,12 @@
         finalObjectURL = '';
       }
       finalFilename = '';
+      recordedChunks = [];
 
       document.getElementById("video-container").scrollIntoView({behavior: "smooth"});
       const overlay = document.getElementById('recordOverlay');
       if (overlay) overlay.style.display = 'none';
       
-      // 退出可能存在的全屏
       exitFullscreenMode();
     }
 
@@ -974,7 +983,6 @@
       ];
       for (const type of types) {
         if (MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
-          console.log("Using MIME type:", type);
           return type;
         }
       }
@@ -983,7 +991,7 @@
 
     // 新增：开始流程控制函数
     async function startSequence() {
-      if (currentState !== AppState.IDLE) return; // 防止连点
+      if (currentState !== AppState.IDLE) return; 
 
       const video = document.getElementById("mainVideo");
       if (video.readyState < 2) {
@@ -997,7 +1005,7 @@
 
       // 2. 锁定状态，准备倒计时
       currentState = AppState.PREPARING;
-      document.getElementById("actionBtn").disabled = true; // 倒计时期间禁用按钮
+      document.getElementById("actionBtn").disabled = true; 
       video.pause();
       video.currentTime = 0;
       video.controls = false;
@@ -1059,6 +1067,7 @@
       canvas.height = video.videoHeight;
 
       try {
+        // 使用 30fps 录制
         canvasStream = canvas.captureStream(30); 
       } catch(e) {
         alert("画面捕获失败，请尝试更新浏览器。");
@@ -1123,10 +1132,35 @@
 
       recordedChunks = [];
       mediaRecorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+        if (e.data && e.data.size > 0) {
+            recordedChunks.push(e.data);
+        }
       };
 
+      // 关键修正：确保在 onstop 事件中才处理最终结果
       mediaRecorder.onstop = () => {
+        // 1. 停止绘制循环
+        if(animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+
+        // 2. 清理资源（必须在这里清理，而不能在 stopRecording 函数里立即清理）
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
+        }
+        if (canvasStream) {
+            canvasStream.getTracks().forEach(track => track.stop());
+            canvasStream = null;
+        }
+        // 断开音频连接
+        if(sourceMic) { try { sourceMic.disconnect(); } catch(e){} }
+        if(micGainNode) { try { micGainNode.disconnect(); } catch(e){} }
+        if(videoGainNode) { try { videoGainNode.disconnect(); } catch(e){} }
+        if(dest) { try { dest.disconnect(); } catch(e){} }
+
+        // 3. 生成视频
         if (recordedChunks.length === 0) {
           alert("录制失败：数据为空。");
           resetRecording();
@@ -1168,9 +1202,6 @@
       // 开始绘制循环
       drawToCanvas(video, ctx, canvas);
 
-      // Intro 逻辑：先播放视频(用于触发加载)，但可能被 Intro 遮挡
-      // 注意：为了保证在移动端视频能播，必须尽早调用 .play()
-      // 这里我们在 intro 期间就让视频准备好， intro 结束后直接解除遮挡
       video.muted = false; 
 
       // 3秒后正式展示视频画面
@@ -1179,7 +1210,6 @@
 
           isIntroMode = false; 
           
-          // 确保视频从头开始播放
           video.currentTime = 0;
           
           const playPromise = video.play();
@@ -1189,30 +1219,31 @@
                  status.style.color = "#FF0000";
               }).catch(error => {
                  console.error("Auto-play failed:", error);
-                 // 如果自动播放失败，尝试静音播放恢复（极少情况）
                  video.muted = true;
                  video.play();
                  status.innerText = "⚠️ 音频自动播放受限，请点击屏幕";
               });
           }
           
-          video.onended = stopRecording;
+          // 修正：延迟 1 秒结束，防止视频尾部被切掉
+          video.onended = () => {
+              if (currentState === AppState.RECORDING) {
+                  status.innerText = "⏳ 即将结束...";
+                  setTimeout(stopRecording, 1000); 
+              }
+          };
       }, 3000);
       
-      // 如果图片加载失败，直接开始
-      introImageObj.onerror = () => { 
-        // 图片加载失败不影响流程，只是绘制黑色背景
-      };
+      introImageObj.onerror = () => { };
     }
 
     function drawToCanvas(video, ctx, canvas) {
-      if (currentState !== AppState.RECORDING) {
+      if (currentState !== AppState.RECORDING && currentState !== AppState.PROCESSING) {
         cancelAnimationFrame(animationFrameId);
         return;
       }
       
       try {
-        // 清除画布
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -1220,7 +1251,6 @@
             if (introImageObj && introImageObj.complete && introImageObj.naturalWidth > 0) {
                 ctx.drawImage(introImageObj, 0, 0, canvas.width, canvas.height);
             } else {
-                // 如果没有图片，显示文字
                 ctx.fillStyle = "#fff";
                 ctx.font = "bold 40px sans-serif";
                 ctx.textAlign = "center";
@@ -1228,11 +1258,13 @@
                 ctx.fillText("Get Ready...", canvas.width/2, canvas.height/2);
             }
         } else {
-            if (video.readyState >= 2 && !video.ended) {
+            // 只要视频没结束，或者在缓冲结束期，都应该绘制
+            if (video.readyState >= 2) {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             }
         }
       } catch (e) {
+        // 如果绘制出错，安全退出
         currentState = AppState.IDLE;
         exitFullscreenMode();
         console.error(e);
@@ -1248,9 +1280,12 @@
       if (currentState !== AppState.RECORDING) return;
       if (!mediaRecorder || mediaRecorder.state === "inactive") return;
 
-      currentState = AppState.PROCESSING; // 防止重复调用
+      currentState = AppState.PROCESSING; // 切换状态
       isIntroMode = false; 
-      cancelAnimationFrame(animationFrameId);
+      
+      // 注意：这里不要立即停止 drawToCanvas 或 canvasStream
+      // 必须等待 mediaRecorder 的 onstop 事件触发后，再清理资源
+
       exitFullscreenMode();
 
       const video = document.getElementById("mainVideo");
@@ -1264,24 +1299,10 @@
       actionBtn.disabled = true;
       beginProcessingOverlay();
 
-      try { mediaRecorder.stop(); } catch(e) {}
-
-      // 清理资源流
-      if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
-        videoStream = null;
+      // 触发停止，这会异步触发 onstop
+      try { mediaRecorder.stop(); } catch(e) {
+        console.error("Recorder Stop Error:", e);
       }
-      if (canvasStream) {
-        canvasStream.getTracks().forEach(track => track.stop());
-        canvasStream = null;
-      }
-      // 不关闭 AudioContext，只断开连接
-      if(sourceMic) { try { sourceMic.disconnect(); } catch(e){} }
-      // sourceVideo 不能随便 disconnect，否则会影响后续预览原片的声音输出
-      // 这里主要断开 GainNode
-      if(micGainNode) { try { micGainNode.disconnect(); } catch(e){} }
-      if(videoGainNode) { try { videoGainNode.disconnect(); } catch(e){} }
-      if(dest) { try { dest.disconnect(); } catch(e){} }
       
       document.getElementById("statusText").innerText = "✨ 视频生成中，请稍候...";
       document.getElementById("statusText").style.color = "var(--pear-yellow)";
@@ -1328,8 +1349,9 @@
     }
 
     function generateVideoAndShowResult() {
+      // 双重检查
       if(recordedChunks.length === 0) {
-        alert("录制失败：数据为空。");
+        alert("生成错误：视频数据为空，请重试");
         resetRecording();
         return;
       }
@@ -1337,6 +1359,14 @@
       try {
         const type = recordedMimeType || 'video/webm';
         finalBlob = new Blob(recordedChunks, { type });
+        
+        // 检查Blob大小，确保有效
+        if(finalBlob.size < 1000) {
+             alert("录制文件过小，可能录制失败，请重试");
+             resetRecording();
+             return;
+        }
+
         finalObjectURL = URL.createObjectURL(finalBlob);
 
         const preview = document.getElementById("previewVideo");
@@ -1345,7 +1375,6 @@
         preview.volume = 1.0;
 
         const downloadBtn = document.getElementById("downloadLink");
-        // Chrome 优先使用 webm
         let ext = '.webm';
         if (type.includes('mp4')) ext = '.mp4';
         
@@ -1365,10 +1394,11 @@
         document.getElementById("statusText").innerText = "🎉 制作成功！Excellent!";
         document.getElementById("statusText").style.color = "var(--rabbit-red)";
 
+        // 这里仅用于UI展示的延迟，文件其实已经生成好了
         setTimeout(() => {
           document.getElementById("waitingHint").style.display = "none";
           document.getElementById("downloadLink").style.display = "flex";
-        }, 2000);
+        }, 1000);
 
       } catch(e) {
         console.error(e);
