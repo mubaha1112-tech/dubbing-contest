@@ -487,7 +487,7 @@
       恭喜你发现彩蛋！
     </div>
     <div style="color: #fff; font-size: 18px; margin: 15px 0; opacity: 0.9;">
-      成功参加活动后，可另外获得传说中的奖励：
+      获得传说中的奖励：
     </div>
     
     <!-- 3个跳动的魔怪 -->
@@ -498,9 +498,6 @@
     </div>
     <div style="color: var(--monster-green); font-weight: bold; font-size: 24px; margin-bottom: 30px;">
       3个魔怪 (3 Monsters)
-    </div>
-      <div style="margin-top: 10px; font-size: 20px; color: #fff;">
-        ( <span style="color: #FF4D4F;">‼️</span> 截图发给老师哦 <span style="color: #FF4D4F;">‼️</span> )
     </div>
 
     <button class="btn btn-primary" onclick="closeEggOverlay()" style="width: 200px; background: linear-gradient(135deg, #FF8E8E, #EE5253); box-shadow: none;">
@@ -994,21 +991,35 @@
 
     // 核心录制逻辑
     function getBestMimeType() {
+      // 修复核心逻辑：优先选择策略
+      // Chrome/Android 在录制 MP4 时经常不写入 Duration Header，导致手机相册无法识别时长。
+      // 因此，Chrome/Android 优先使用 WebM（VP9/VP8），兼容性最好。
+      // iOS Safari 必须使用 MP4（H.264），因为它原生支持且录制正确。
+      
+      if (isSafari || isIOS) {
+        // iOS/Mac Safari 强制检查 MP4
+        if (MediaRecorder.isTypeSupported("video/mp4")) {
+           return "video/mp4";
+        }
+        return "video/mp4;codecs=avc1"; 
+      }
+
+      // 对于 Chrome, Edge, Firefox, Android Webview
       const types = [
-        "video/mp4;codecs=avc1",
-        "video/mp4;codecs=hvc1",
-        "video/mp4",
-        "video/webm;codes=vp9",
-        "video/webm;codes=vp8"
+        "video/webm;codecs=vp9",
+        "video/webm;codecs=vp8",
+        "video/webm",
+        "video/mp4" // 作为最后的备选
       ];
+      
       for (const type of types) {
         if (MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
           console.log("Using MIME type:", type);
           return type;
         }
       }
-      console.log("Using default/fallback MIME type (likely MP4 for Safari)");
-      return 'video/mp4';
+      
+      return 'video/webm'; // 默认回退
     }
 
     function toggleRecording() {
@@ -1102,7 +1113,8 @@
       canvas.height = video.videoHeight;
 
       try {
-        canvasStream = canvas.captureStream(25);
+        // 使用 30fps，匹配一般视频帧率
+        canvasStream = canvas.captureStream(30);
       } catch(e) {
         console.error("Canvas captureStream failed:", e);
         alert("画面捕获失败：浏览器不支持Canvas流捕获。请尝试更新浏览器。");
@@ -1153,13 +1165,22 @@
       }
 
       recordedMimeType = getBestMimeType();
+      
+      const options = {
+        mimeType: recordedMimeType,
+        videoBitsPerSecond: 2500000 // 提高一点比特率保证清晰度
+      };
+
       try {
-        mediaRecorder = recordedMimeType
-          ? new MediaRecorder(combinedStream, { mimeType: recordedMimeType, videoBitsPerSecond: 2000000 })
-          : new MediaRecorder(combinedStream, { videoBitsPerSecond: 2000000 });
+        mediaRecorder = new MediaRecorder(combinedStream, options);
       } catch (e) {
-        alert("MediaRecorder初始化失败，请更换浏览器。");
-        return;
+        console.warn("MediaRecorder init failed with options, trying default", e);
+        try {
+            mediaRecorder = new MediaRecorder(combinedStream);
+        } catch(e2) {
+            alert("无法初始化录制组件，请更换浏览器");
+            return;
+        }
       }
 
       recordedChunks = [];
@@ -1194,7 +1215,7 @@
       const startRecorderAndDraw = () => {
           // 启动录制器
           try {
-              mediaRecorder.start(500);
+              mediaRecorder.start(1000); // 每1秒生成一个切片
           } catch(e) {
               alert("录制启动失败"); return;
           }
@@ -1383,7 +1404,8 @@
       }
 
       try {
-        const type = recordedMimeType || 'video/mp4';
+        // 如果是 WebM，部分移动端需要明确类型才能播放
+        const type = recordedMimeType || 'video/webm';
         finalBlob = new Blob(recordedChunks, { type });
         finalObjectURL = URL.createObjectURL(finalBlob);
 
@@ -1393,9 +1415,10 @@
         preview.volume = 1.0;
 
         const downloadBtn = document.getElementById("downloadLink");
-        const lowerType = type.toLowerCase();
+        
+        // 自动判断后缀名
         let ext = '.mp4';
-        if (lowerType.includes('webm')) ext = '.webm';
+        if (type.toLowerCase().includes('webm')) ext = '.webm';
         finalFilename = `Firstleap_Voice_${Date.now()}${ext}`;
 
         // 环境按钮配置
@@ -1466,7 +1489,7 @@
         return;
       }
       try {
-        const file = new File([finalBlob], finalFilename || 'Firstleap_Voice.mp4', { type: finalBlob.type || 'video/mp4' });
+        const file = new File([finalBlob], finalFilename, { type: finalBlob.type });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({ files: [file], title: 'Firstleap Voice Magic', text: '配音秀' });
         } else {
