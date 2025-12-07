@@ -415,6 +415,19 @@
       opacity: 0.8;
       font-weight: normal;
     }
+
+    /* 彩蛋专用动画样式 */
+    .monster-gift {
+      font-size: 60px;
+      animation: jumpHappy 1s infinite alternate;
+    }
+
+    @keyframes jumpHappy {
+      0% { transform: translateY(0) rotate(-10deg); }
+      100% { transform: translateY(-20px) rotate(10deg); }
+    }
+
+
   </style>
 </head>
 <body class="welcome-active">
@@ -465,6 +478,34 @@
     </div>
     <video id="wxHintVideo" playsinline webkit-playsinline controls style="width:88%; max-width:520px; border-radius:12px; background:#000; margin-top:14px;"></video>
     <button class="btn btn-retry" onclick="closeWxHint()" style="width:220px; margin-top:16px;">我知道了</button>
+  </div>
+
+  <!-- 彩蛋弹窗结构 -->
+  <div id="eggOverlay" class="overlay-fullscreen" style="background: rgba(0,0,0,0.9); z-index: 100001;">
+    <div style="font-size: 80px; margin-bottom: 20px;">🎉</div>
+    <div class="overlay-text" style="color: #FFD700; font-size: 28px; text-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);">
+      恭喜你发现彩蛋！
+    </div>
+    <div style="color: #fff; font-size: 18px; margin: 15px 0; opacity: 0.9;">
+      成功参加活动后，可另外获得传说中的奖励：
+    </div>
+    
+    <!-- 3个跳动的魔怪 -->
+    <div style="display: flex; gap: 20px; margin: 20px 0;">
+      <div class="monster-gift">👾</div>
+      <div class="monster-gift" style="animation-delay: 0.1s">👾</div>
+      <div class="monster-gift" style="animation-delay: 0.2s">👾</div>
+    </div>
+    <div style="color: var(--monster-green); font-weight: bold; font-size: 24px; margin-bottom: 30px;">
+      3个魔怪 (3 Monsters)
+    </div>
+      <div style="margin-top: 10px; font-size: 20px; color: #fff;">
+        ( <span style="color: #FF4D4F;">‼️</span> 截图发给老师哦 <span style="color: #FF4D4F;">‼️</span> )
+    </div>
+
+    <button class="btn btn-primary" onclick="closeEggOverlay()" style="width: 200px; background: linear-gradient(135deg, #FF8E8E, #EE5253); box-shadow: none;">
+      太棒了！收下
+    </button>
   </div>
 
   <div class="container">
@@ -749,7 +790,7 @@
     const ua = navigator.userAgent || '';
     const isWeChat = /MicroMessenger/i.test(ua);
     const isIOS = /iPhone|iPad|iPod/i.test(ua);
-    const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua);
+    const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua) && !/Android/i.test(ua);
 
     const supportsFileShare = (() => {
       try {
@@ -951,23 +992,27 @@
       if (overlay) overlay.style.display = 'none';
     }
 
-    // 核心录制逻辑
+    // 核心录制逻辑 - 修复：优化 MIME Type 选择
     function getBestMimeType() {
-      const types = [
-        "video/mp4;codecs=avc1",
-        "video/mp4;codecs=hvc1",
-        "video/mp4",
-        "video/webm;codes=vp9",
-        "video/webm;codes=vp8"
-      ];
-      for (const type of types) {
-        if (MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
-          console.log("Using MIME type:", type);
-          return type;
-        }
+      // 1. 如果是 Safari，强制尝试 mp4，否则 Safari 无法录制
+      if (isSafari) {
+        return 'video/mp4';
       }
-      console.log("Using default/fallback MIME type (likely MP4 for Safari)");
-      return 'video/mp4';
+      
+      // 2. 如果是 Chrome 或 Android，强烈建议使用 webm (vp9 或 vp8)
+      // 原因：Chrome 录制 mp4 时，往往不写入时长信息(metadata)，导致下载后文件巨大但只有1秒
+      if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+        return 'video/webm;codecs=vp9';
+      }
+      if (MediaRecorder.isTypeSupported('video/webm')) {
+        return 'video/webm';
+      }
+
+      // 3. Fallback
+      if (MediaRecorder.isTypeSupported('video/mp4')) {
+        return 'video/mp4';
+      }
+      return '';
     }
 
     function toggleRecording() {
@@ -1112,6 +1157,8 @@
       }
 
       recordedMimeType = getBestMimeType();
+      console.log("Recording MIME type:", recordedMimeType);
+
       try {
         mediaRecorder = recordedMimeType
           ? new MediaRecorder(combinedStream, { mimeType: recordedMimeType, videoBitsPerSecond: 2000000 })
@@ -1151,9 +1198,9 @@
       introImageObj.src = "intro.png";
 
       const startRecorderAndDraw = () => {
-          // 启动录制器
+          // 启动录制器 - 修复：切片时间改为 1000ms，太小容易导致 Chrome 文件头错误
           try {
-              mediaRecorder.start(500);
+              mediaRecorder.start(1000);
           } catch(e) {
               alert("录制启动失败"); return;
           }
@@ -1202,11 +1249,11 @@
           // 图片加载失败，跳过 Intro 模式
           console.warn("intro.png not found, skipping intro.");
           isIntroMode = false;
-          startRecorderAndDraw(); // 逻辑里会立刻被 setTimeout 覆盖，但没关系，至少能跑
+          startRecorderAndDraw(); 
       };
     }
 
-    // Canvas 绘制函数（修改版）
+    // Canvas 绘制函数
     function drawToCanvas(video, ctx, canvas) {
       if (!isRecording) {
         cancelAnimationFrame(animationFrameId);
@@ -1224,7 +1271,10 @@
         } else {
             // 视频模式：绘制视频
             if (video.readyState >= 2 && !video.ended) {
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                // 确保 videoWidth 存在
+                if(video.videoWidth > 0 && video.videoHeight > 0) {
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                }
             }
         }
       } catch (e) {
@@ -1332,7 +1382,7 @@
       }, 30);
     }
 
-    // 生成结果
+    // 生成结果 - 修复：自动匹配文件扩展名
     function generateVideoAndShowResult() {
       if(recordedChunks.length === 0) {
         alert("录制失败：数据为空。可能是Canvas捕获失败或麦克风未授权。");
@@ -1342,7 +1392,7 @@
       }
 
       try {
-        const type = recordedMimeType || 'video/mp4';
+        const type = recordedMimeType || 'video/webm'; // Chrome 默认 fallback
         finalBlob = new Blob(recordedChunks, { type });
         finalObjectURL = URL.createObjectURL(finalBlob);
 
@@ -1352,10 +1402,14 @@
         preview.volume = 1.0;
 
         const downloadBtn = document.getElementById("downloadLink");
-        const lowerType = type.toLowerCase();
-        let ext = '.mp4';
-        if (lowerType.includes('webm')) ext = '.webm';
-        finalFilename = `Firstleap_Voice_${Date.now()}${ext}`;
+        
+        // 关键逻辑：根据 MIME 类型决定文件后缀
+        let fileExt = 'mp4';
+        if (type.indexOf('webm') > -1) {
+            fileExt = 'webm';
+        }
+        
+        finalFilename = `Firstleap_Voice_${Date.now()}.${fileExt}`;
 
         // 环境按钮配置
         setupSaveButton(downloadBtn);
@@ -1425,7 +1479,7 @@
         return;
       }
       try {
-        const file = new File([finalBlob], finalFilename || 'Firstleap_Voice.mp4', { type: finalBlob.type || 'video/mp4' });
+        const file = new File([finalBlob], finalFilename, { type: finalBlob.type });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({ files: [file], title: 'Firstleap Voice Magic', text: '配音秀' });
         } else {
@@ -1499,6 +1553,90 @@
       const overlay = document.getElementById('recordOverlay');
       if (overlay) overlay.style.display = 'none';
     });
+
+    /* --- 彩蛋逻辑开始 --- */
+    let titleClickCount = 0;
+    let titleClickTimer = null;
+
+    function initEasterEgg() {
+      // 获取标题元素（h1）
+      const titleElement = document.querySelector('h1');
+      
+      if (!titleElement) return;
+
+      // 监听点击事件
+      titleElement.addEventListener('click', function() {
+        titleClickCount++;
+
+        // 如果是第一次点击，启动一个计时器
+        // 如果2秒内没有点够3次，就重置计数
+        if (titleClickCount === 1) {
+          titleClickTimer = setTimeout(() => {
+            titleClickCount = 0;
+          }, 2000); // 2秒时间窗口
+        }
+
+        // 如果点到了3次
+        if (titleClickCount === 3) {
+          showEggOverlay();
+          // 重置计数和计时器
+          titleClickCount = 0;
+          clearTimeout(titleClickTimer);
+        }
+      });
+      
+      // 把鼠标变成手型，提示可以点击（可选）
+      titleElement.style.cursor = "pointer";
+      // 禁止双击选中文字，提升体验
+      titleElement.style.userSelect = "none"; 
+      titleElement.style.webkitUserSelect = "none";
+    }
+
+    function showEggOverlay() {
+      const egg = document.getElementById('eggOverlay');
+      if(egg) {
+        egg.style.display = 'flex';
+        // 播放一点简单的音效（利用现有的 AudioContext）
+        playEggSound();
+      }
+    }
+
+    function closeEggOverlay() {
+      const egg = document.getElementById('eggOverlay');
+      if(egg) egg.style.display = 'none';
+    }
+
+    // 简单的“叮”声效
+    function playEggSound() {
+      try {
+        initializeAudioContext();
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.type = 'sine';
+        // 频率从 400Hz 滑向 800Hz，听起来像“Ding!”
+        osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+        
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+      } catch(e) {
+        console.log("Sound play failed", e);
+      }
+    }
+
+    // 页面加载完成后初始化彩蛋
+    document.addEventListener('DOMContentLoaded', initEasterEgg);
+    /* --- 彩蛋逻辑结束 --- */
+
   </script>
 </body>
 </html>
