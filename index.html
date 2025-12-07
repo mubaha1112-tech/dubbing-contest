@@ -269,7 +269,6 @@
       border: 4px solid #fff;
       object-fit: contain;
     }
-    video:fullscreen { border: none; border-radius: 0; width: 100%; height: 100%; }
     
     body.recording-mode video::-webkit-media-controls { display: none !important; }
     body.recording-mode video::-webkit-media-controls-enclosure { display: none !important; }
@@ -559,7 +558,7 @@
              webkit-playsinline
              x5-playsinline></video>
       
-      <!-- 等待提示区 -->
+      <!-- 等待提示区：防止用户在文件封装完成前操作 -->
       <div id="waitingHint">
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
           <div class="spinner" style="width: 30px; height: 30px; border-width: 3px; margin-bottom: 10px;"></div>
@@ -872,7 +871,7 @@
       actionBtn.style.display = "none";
       actionBtn.className = "btn btn-record";
       actionBtn.innerHTML = "🎙️ 准备就绪，开始配音";
-      actionBtn.onclick = startSequence; // 恢复点击事件为开始
+      actionBtn.onclick = startSequence; 
       
       playBtn.style.display = "none";
       videoContainer.style.display = "block";
@@ -882,7 +881,6 @@
       videoPlayer.load();
       videoPlayer.volume = 1.0;
       videoPlayer.controls = true;
-      // 移除旧的监听器
       videoPlayer.onended = null;
 
       videoPlayer.onprogress = function() {
@@ -907,7 +905,6 @@
         canvas.height = videoPlayer.videoHeight || 360;
       };
       
-      // 预览时的行为
       videoPlayer.onended = function() {
         if(currentState !== AppState.RECORDING) {
           playBtn.innerHTML = "▶️ 预览原片 Preview";
@@ -961,7 +958,7 @@
       mainVideo.pause();
       mainVideo.controls = true;
       mainVideo.volume = 1.0;
-      // 重置 onended，防止污染预览逻辑
+      
       mainVideo.onended = function() {
         if(currentState !== AppState.RECORDING) {
           document.getElementById("playBtn").innerHTML = "▶️ 预览原片 Preview";
@@ -1003,7 +1000,6 @@
       return 'video/webm'; 
     }
 
-    // 新增：开始流程控制函数
     async function startSequence() {
       if (currentState !== AppState.IDLE) return; 
 
@@ -1025,7 +1021,7 @@
       video.controls = false;
       video.volume = 1.0; 
 
-      // 3. 立即进入全屏以保持用户手势活跃
+      // 3. 立即进入全屏
       enterFullscreenMode();
 
       // 4. 开始倒计时
@@ -1050,7 +1046,6 @@
           text.innerText = "GO!";
           setTimeout(() => {
             overlay.style.display = 'none';
-            // 倒计时结束，开始实际录制
             executeActualRecording();
           }, 500);
         }
@@ -1081,7 +1076,6 @@
       canvas.height = video.videoHeight;
 
       try {
-        // 使用 30fps 录制
         canvasStream = canvas.captureStream(30); 
       } catch(e) {
         alert("画面捕获失败，请尝试更新浏览器。");
@@ -1091,33 +1085,32 @@
 
       const canvasVideoTrack = canvasStream.getVideoTracks()[0];
       
-      // 路由构建 (解决回声问题)
-      dest = audioCtx.createMediaStreamDestination(); // 录制目的地
-      micGainNode = audioCtx.createGain(); // 麦克风增益
-      videoGainNode = audioCtx.createGain(); // 视频原声增益
+      dest = audioCtx.createMediaStreamDestination(); 
+      micGainNode = audioCtx.createGain(); 
+      videoGainNode = audioCtx.createGain(); 
       
       micGainNode.gain.value = 1.5; 
       videoGainNode.gain.value = 1.2;
 
-      // 麦克风连接
+      // 麦克风连接逻辑：只连录制端 (dest)
       if (micStream && micStream.getAudioTracks().length > 0) {
         sourceMic = audioCtx.createMediaStreamSource(micStream);
         sourceMic.connect(micGainNode);
-        micGainNode.connect(dest); // 麦克风只去录制端，不去扬声器
+        micGainNode.connect(dest); 
       }
 
       try {
-        // 视频连接
+        // 视频音频连接逻辑
         if (!video._elementAudioSource) {
           video._elementAudioSource = audioCtx.createMediaElementSource(video);
         }
         sourceVideo = video._elementAudioSource;
         
-        // 路径1: 去录制
+        // 1. 去录制端
         sourceVideo.connect(videoGainNode);
         videoGainNode.connect(dest);
         
-        // 路径2: 去扬声器 (让用户听到伴奏)
+        // 2. 去扬声器 (关键：否则用户听不到原声)
         sourceVideo.connect(audioCtx.destination); 
       } catch (e) {
         console.warn("Audio routing error", e);
@@ -1128,6 +1121,7 @@
       if (mixedAudioTrack) {
         combinedStream = new MediaStream([canvasVideoTrack, mixedAudioTrack]);
       } else {
+        // 降级处理
         const micTrack = micStream && micStream.getAudioTracks().length > 0 ? micStream.getAudioTracks()[0] : null;
         if (micTrack) combinedStream = new MediaStream([canvasVideoTrack, micTrack]);
       }
@@ -1151,7 +1145,7 @@
         }
       };
 
-      // 关键修正：确保在 onstop 事件中才处理最终结果
+      // 【核心修复】：在 onstop 中才清理流，确保最后数据写入
       mediaRecorder.onstop = () => {
         // 1. 停止绘制循环
         if(animationFrameId) {
@@ -1159,7 +1153,7 @@
             animationFrameId = null;
         }
 
-        // 2. 清理资源（必须在这里清理，而不能在 stopRecording 函数里立即清理）
+        // 2. 清理资源 (流停止逻辑移动到这里)
         if (videoStream) {
             videoStream.getTracks().forEach(track => track.stop());
             videoStream = null;
@@ -1168,62 +1162,58 @@
             canvasStream.getTracks().forEach(track => track.stop());
             canvasStream = null;
         }
+        
         // 断开音频连接
         if(sourceMic) { try { sourceMic.disconnect(); } catch(e){} }
         if(micGainNode) { try { micGainNode.disconnect(); } catch(e){} }
         if(videoGainNode) { try { videoGainNode.disconnect(); } catch(e){} }
-        if(dest) { try { dest.disconnect(); } catch(e){} }
+        // 注意：不建议完全disconnect dest，某些浏览器可能会重用Context
 
-        // 3. 生成视频
         if (recordedChunks.length === 0) {
           alert("录制失败：数据为空。");
           resetRecording();
           return;
         }
+        // 调用生成
         finishProcessingOverlayThen(() => generateVideoAndShowResult());
       };
 
       // UI 更新
       document.getElementById("playBtn").style.display = "none";
-      actionBtn.disabled = false; // 启用按钮
+      actionBtn.disabled = false;
       actionBtn.innerHTML = "⏹️ 完成配音 Stop";
       actionBtn.className = "btn btn-stop";
-      actionBtn.onclick = stopRecording; // 改变点击事件为停止
+      actionBtn.onclick = stopRecording; 
       
       const overlay = document.getElementById('recordOverlay');
       if (overlay) overlay.style.display = 'flex';
       const pauseBtn = document.getElementById('pauseToggleBtn');
       if (pauseBtn) pauseBtn.textContent = '暂停';
 
-      // 准备 Intro 图片
       introImageObj = new Image();
       introImageObj.crossOrigin = "anonymous";
       introImageObj.src = "intro.png";
 
-      // 启动逻辑
       try {
           mediaRecorder.start(); 
       } catch(e) {
           alert("录制启动失败"); return;
       }
 
-      // 设置状态
       currentState = AppState.RECORDING;
       isIntroMode = true;
       status.innerText = "🎬 Intro 播放中...";
       status.style.color = "var(--pear-yellow)";
 
-      // 开始绘制循环
       drawToCanvas(video, ctx, canvas);
 
       video.muted = false; 
 
-      // 3秒后正式展示视频画面
+      // 3秒 Intro 后开始播放视频
       setTimeout(() => {
-          if(currentState !== AppState.RECORDING) return; // 如果中途停止
+          if(currentState !== AppState.RECORDING) return; 
 
           isIntroMode = false; 
-          
           video.currentTime = 0;
           
           const playPromise = video.play();
@@ -1239,10 +1229,10 @@
               });
           }
           
-          // 修正：延迟 1 秒结束，防止视频尾部被切掉
+          // 【核心修复】：延迟1秒停止录制，防止尾部被切
           video.onended = () => {
               if (currentState === AppState.RECORDING) {
-                  status.innerText = "⏳ 即将结束...";
+                  status.innerText = "⏳ 整理中...";
                   setTimeout(stopRecording, 1000); 
               }
           };
@@ -1272,13 +1262,11 @@
                 ctx.fillText("Get Ready...", canvas.width/2, canvas.height/2);
             }
         } else {
-            // 只要视频没结束，或者在缓冲结束期，都应该绘制
             if (video.readyState >= 2) {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             }
         }
       } catch (e) {
-        // 如果绘制出错，安全退出
         currentState = AppState.IDLE;
         exitFullscreenMode();
         console.error(e);
@@ -1290,16 +1278,13 @@
     }
 
     function stopRecording() {
-      // 只有在录制状态下才执行停止逻辑
       if (currentState !== AppState.RECORDING) return;
       if (!mediaRecorder || mediaRecorder.state === "inactive") return;
 
-      currentState = AppState.PROCESSING; // 切换状态
+      currentState = AppState.PROCESSING; 
       isIntroMode = false; 
       
-      // 注意：这里不要立即停止 drawToCanvas 或 canvasStream
-      // 必须等待 mediaRecorder 的 onstop 事件触发后，再清理资源
-
+      // 退出全屏
       exitFullscreenMode();
 
       const video = document.getElementById("mainVideo");
@@ -1313,7 +1298,7 @@
       actionBtn.disabled = true;
       beginProcessingOverlay();
 
-      // 触发停止，这会异步触发 onstop
+      // 只调用 stop()，清理工作交给 onstop 事件
       try { mediaRecorder.stop(); } catch(e) {
         console.error("Recorder Stop Error:", e);
       }
@@ -1363,7 +1348,7 @@
     }
 
     function generateVideoAndShowResult() {
-      // 双重检查
+      // 再次检查chunks
       if(recordedChunks.length === 0) {
         alert("生成错误：视频数据为空，请重试");
         resetRecording();
@@ -1374,7 +1359,6 @@
         const type = recordedMimeType || 'video/webm';
         finalBlob = new Blob(recordedChunks, { type });
         
-        // 检查Blob大小，确保有效
         if(finalBlob.size < 1000) {
              alert("录制文件过小，可能录制失败，请重试");
              resetRecording();
@@ -1400,10 +1384,10 @@
         const resultArea = document.getElementById("resultArea");
         const waitingHint = document.getElementById("waitingHint");
 
-        // 1. 显示结果区域
+        // 显示结果区域
         resultArea.style.display = "block";
         
-        // 2. 强制隐藏下载按钮，显示等待提示
+        // 【核心修复】：等待提示区，强制等待2秒，确保Blob处理完毕
         downloadBtn.style.display = "none";
         waitingHint.style.display = "block";
 
@@ -1411,12 +1395,9 @@
         document.getElementById("statusText").innerText = "🎉 制作成功！Excellent!";
         document.getElementById("statusText").style.color = "var(--rabbit-red)";
 
-        // 3. 延迟2秒后，隐藏等待提示，显示下载按钮
         setTimeout(() => {
           waitingHint.style.display = "none";
-          downloadBtn.style.display = "flex"; // 使用flex以保持样式对齐
-          
-          // 可选：稍微滚动一下确保按钮可见
+          downloadBtn.style.display = "flex"; 
           downloadBtn.scrollIntoView({behavior: "smooth", block: "center"});
         }, 2000);
 
