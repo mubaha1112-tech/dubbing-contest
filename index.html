@@ -248,9 +248,10 @@
     .btn-group { display: flex; gap: 15px; margin-top: 15px; }
     .btn-download {
       background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-      text-decoration: none; line-height: 1.5; flex: 1; display: flex; align-items: center; justify-content: center;
+      text-decoration: none; line-height: 1.5; flex: 1; display: none; align-items: center; justify-content: center;
       cursor: pointer; color: #fff; font-weight: bold; border-radius: 25px; box-shadow: 0 6px 0 rgba(0,0,0,0.1);
       font-size: 18px; padding: 16px; border: none;
+      animation: fadeIn 0.5s ease;
     }
     .btn-retry { background: #dfe6e9; color: #636e72; box-shadow: 0 4px 0 #b2bec3; flex: 1; }
 
@@ -424,12 +425,13 @@
       100% { transform: translateY(-20px) rotate(10deg); }
     }
     
-    /* 封装等待区 */
+    /* 封装等待区样式 */
     #waitingHint {
       margin: 20px 0;
       padding: 15px;
-      background: #f9f9f9;
+      background: #fff8e1;
       border-radius: 15px;
+      border: 1px solid #ffe082;
       display: none; /* 默认隐藏 */
     }
   </style>
@@ -561,7 +563,7 @@
       <div id="waitingHint">
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
           <div class="spinner" style="width: 30px; height: 30px; border-width: 3px; margin-bottom: 10px;"></div>
-          <span style="color: var(--pear-yellow); font-weight: bold; font-size: 14px;">视频封装中，请稍候...<br>Video Processing...</span>
+          <span style="color: #f39c12; font-weight: bold; font-size: 14px;">视频封装中，请稍候...<br>Video Processing...</span>
         </div>
       </div>
 
