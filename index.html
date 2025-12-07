@@ -773,10 +773,6 @@
     let animationFrameId = null;
     let hasMicPermission = false;
     
-    // 新增变量：控制 Intro 和 绘制
-    let isIntroMode = false;
-    let introImageObj = null;
-
     // 合成进度控制
     let processingInterval = null;
     let processingProgress = 0;
@@ -790,7 +786,7 @@
     const ua = navigator.userAgent || '';
     const isWeChat = /MicroMessenger/i.test(ua);
     const isIOS = /iPhone|iPad|iPod/i.test(ua);
-    const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua) && !/Android/i.test(ua);
+    const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua);
 
     const supportsFileShare = (() => {
       try {
@@ -992,27 +988,23 @@
       if (overlay) overlay.style.display = 'none';
     }
 
-    // 核心录制逻辑 - 修复：优化 MIME Type 选择
+    // 核心录制逻辑
     function getBestMimeType() {
-      // 1. 如果是 Safari，强制尝试 mp4，否则 Safari 无法录制
-      if (isSafari) {
-        return 'video/mp4';
+      const types = [
+        "video/mp4;codecs=avc1",
+        "video/mp4;codecs=hvc1",
+        "video/mp4",
+        "video/webm;codes=vp9",
+        "video/webm;codes=vp8"
+      ];
+      for (const type of types) {
+        if (MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
+          console.log("Using MIME type:", type);
+          return type;
+        }
       }
-      
-      // 2. 如果是 Chrome 或 Android，强烈建议使用 webm (vp9 或 vp8)
-      // 原因：Chrome 录制 mp4 时，往往不写入时长信息(metadata)，导致下载后文件巨大但只有1秒
-      if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-        return 'video/webm;codecs=vp9';
-      }
-      if (MediaRecorder.isTypeSupported('video/webm')) {
-        return 'video/webm';
-      }
-
-      // 3. Fallback
-      if (MediaRecorder.isTypeSupported('video/mp4')) {
-        return 'video/mp4';
-      }
-      return '';
+      console.log("Using default/fallback MIME type (likely MP4 for Safari)");
+      return 'video/mp4';
     }
 
     function toggleRecording() {
@@ -1124,9 +1116,9 @@
       micGainNode = audioCtx.createGain();
       videoGainNode = audioCtx.createGain();
       
-      // 初始化时先静音，防止 Intro 期间有噪音
-      micGainNode.gain.value = 0; 
-      videoGainNode.gain.value = 0;
+      // 直接设置正常的音量（去掉Intro逻辑，不再需要静音）
+      micGainNode.gain.value = 1.5; 
+      videoGainNode.gain.value = 1.2;
 
       if (micStream && micStream.getAudioTracks().length > 0) {
         sourceMic = audioCtx.createMediaStreamSource(micStream);
@@ -1157,8 +1149,6 @@
       }
 
       recordedMimeType = getBestMimeType();
-      console.log("Recording MIME type:", recordedMimeType);
-
       try {
         mediaRecorder = recordedMimeType
           ? new MediaRecorder(combinedStream, { mimeType: recordedMimeType, videoBitsPerSecond: 2000000 })
@@ -1192,68 +1182,37 @@
       const pauseBtn = document.getElementById('pauseToggleBtn');
       if (pauseBtn) pauseBtn.textContent = '暂停';
 
-      // --- 修改逻辑：持续绘制 Intro 避免录制中断 ---
-      introImageObj = new Image();
-      introImageObj.crossOrigin = "anonymous";
-      introImageObj.src = "intro.png";
+      // --- 直接开始录制并播放视频 (移除Intro逻辑) ---
+      
+      // 1. 启动录制器
+      try {
+          mediaRecorder.start(500);
+      } catch(e) {
+          alert("录制启动失败"); return;
+      }
 
-      const startRecorderAndDraw = () => {
-          // 启动录制器 - 修复：切片时间改为 1000ms，太小容易导致 Chrome 文件头错误
-          try {
-              mediaRecorder.start(1000);
-          } catch(e) {
-              alert("录制启动失败"); return;
-          }
+      // 2. 标记状态
+      isRecording = true;
+      status.innerText = "🔴 录制中 (Recording)...";
+      status.style.color = "#FF0000";
 
-          // 标记为开始，进入绘图循环
-          isRecording = true;
-          // 启动 Intro 模式
-          isIntroMode = true;
-          status.innerText = "🎬 Intro 播放中...";
-          status.style.color = "var(--pear-yellow)";
+      // 3. 开始绘制画面
+      drawToCanvas(video, ctx, canvas);
 
-          // 开始绘制循环（此时绘制 Intro）
-          drawToCanvas(video, ctx, canvas);
-
-          // 3秒后切换到视频内容
-          setTimeout(() => {
-              isIntroMode = false; // 切换绘制模式
-              
-              // 恢复音量
-              micGainNode.gain.value = 1.5;
-              videoGainNode.gain.value = 1.2;
-              
-              // 播放视频
-              video.currentTime = 0;
-              video.volume = 1.0;
-              // 再次确保不显示控件
-              video.controls = false; 
-              
-              video.play().then(() => {
-                 status.innerText = "🔴 录制中 (Recording)...";
-                 status.style.color = "#FF0000";
-              }).catch((e) => {
-                 console.error("Play failed:", e);
-                 alert("自动播放失败，请点击屏幕。");
-              });
-              
-              video.onended = stopRecording;
-          }, 3000);
-      };
-
-      introImageObj.onload = () => {
-          startRecorderAndDraw();
-      };
-
-      introImageObj.onerror = () => {
-          // 图片加载失败，跳过 Intro 模式
-          console.warn("intro.png not found, skipping intro.");
-          isIntroMode = false;
-          startRecorderAndDraw(); 
-      };
+      // 4. 播放视频
+      video.currentTime = 0;
+      video.volume = 1.0;
+      video.controls = false; 
+      
+      video.play().catch((e) => {
+         console.error("Play failed:", e);
+         alert("自动播放失败，请点击屏幕。");
+      });
+      
+      video.onended = stopRecording;
     }
 
-    // Canvas 绘制函数
+    // Canvas 绘制函数（修改版：移除 Intro 绘制逻辑）
     function drawToCanvas(video, ctx, canvas) {
       if (!isRecording) {
         cancelAnimationFrame(animationFrameId);
@@ -1261,21 +1220,9 @@
       }
       
       try {
-        if (isIntroMode) {
-            // Intro 模式：绘制图片（保持黑底）
-            ctx.fillStyle = "#000";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            if (introImageObj) {
-                ctx.drawImage(introImageObj, 0, 0, canvas.width, canvas.height);
-            }
-        } else {
-            // 视频模式：绘制视频
-            if (video.readyState >= 2 && !video.ended) {
-                // 确保 videoWidth 存在
-                if(video.videoWidth > 0 && video.videoHeight > 0) {
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                }
-            }
+        // 仅绘制视频内容
+        if (video.readyState >= 2 && !video.ended) {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         }
       } catch (e) {
         console.error("Canvas Draw Error:", e);
@@ -1293,7 +1240,6 @@
       if (!mediaRecorder || mediaRecorder.state === "inactive") return;
 
       isRecording = false;
-      isIntroMode = false; // 重置
       cancelAnimationFrame(animationFrameId);
       exitFullscreenMode();
 
@@ -1382,7 +1328,7 @@
       }, 30);
     }
 
-    // 生成结果 - 修复：自动匹配文件扩展名
+    // 生成结果
     function generateVideoAndShowResult() {
       if(recordedChunks.length === 0) {
         alert("录制失败：数据为空。可能是Canvas捕获失败或麦克风未授权。");
@@ -1392,7 +1338,7 @@
       }
 
       try {
-        const type = recordedMimeType || 'video/webm'; // Chrome 默认 fallback
+        const type = recordedMimeType || 'video/mp4';
         finalBlob = new Blob(recordedChunks, { type });
         finalObjectURL = URL.createObjectURL(finalBlob);
 
@@ -1402,14 +1348,10 @@
         preview.volume = 1.0;
 
         const downloadBtn = document.getElementById("downloadLink");
-        
-        // 关键逻辑：根据 MIME 类型决定文件后缀
-        let fileExt = 'mp4';
-        if (type.indexOf('webm') > -1) {
-            fileExt = 'webm';
-        }
-        
-        finalFilename = `Firstleap_Voice_${Date.now()}.${fileExt}`;
+        const lowerType = type.toLowerCase();
+        let ext = '.mp4';
+        if (lowerType.includes('webm')) ext = '.webm';
+        finalFilename = `Firstleap_Voice_${Date.now()}${ext}`;
 
         // 环境按钮配置
         setupSaveButton(downloadBtn);
@@ -1479,7 +1421,7 @@
         return;
       }
       try {
-        const file = new File([finalBlob], finalFilename, { type: finalBlob.type });
+        const file = new File([finalBlob], finalFilename || 'Firstleap_Voice.mp4', { type: finalBlob.type || 'video/mp4' });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({ files: [file], title: 'Firstleap Voice Magic', text: '配音秀' });
         } else {
