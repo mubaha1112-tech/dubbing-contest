@@ -480,7 +480,6 @@
     <button class="btn btn-retry" onclick="closeWxHint()" style="width:220px; margin-top:16px;">我知道了</button>
   </div>
 
-  <!-- 彩蛋弹窗结构 -->
   <div id="eggOverlay" class="overlay-fullscreen" style="background: rgba(0,0,0,0.9); z-index: 100001;">
     <div style="font-size: 80px; margin-bottom: 20px;">🎉</div>
     <div class="overlay-text" style="color: #FFD700; font-size: 28px; text-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);">
@@ -490,7 +489,6 @@
       成功参加活动后，可另外获得传说中的奖励：
     </div>
     
-    <!-- 3个跳动的魔怪 -->
     <div style="display: flex; gap: 20px; margin: 20px 0;">
       <div class="monster-gift">👾</div>
       <div class="monster-gift" style="animation-delay: 0.1s">👾</div>
@@ -541,17 +539,14 @@
         您的浏览器不支持视频标签。
       </video>
 
-      <!-- 右上角覆盖层：仅显示暂停按钮，取消“完成配音”按钮 -->
       <div id="recordOverlay" class="record-overlay" aria-label="录制控制" style="display:none;">
         <button id="pauseToggleBtn" class="btn pause" onclick="togglePauseDuringRecording()">暂停</button>
       </div>
 
-      <!-- 人性化：佩戴耳机提示（可一直显示，鼓励配音时佩戴耳机） -->
       <div class="tip" style="margin-top: 6px;">🎧 <b>温馨提示：</b>配音前请佩戴耳机，以防回声啸叫！</div>
       <div class="status-text" id="statusText"></div>
 
       <button class="btn btn-play" id="playBtn" onclick="togglePreview()">▶️ 预览原片 Preview</button>
-      <!-- 修复：按钮始终由主按钮控制开始/停止 -->
       <button class="btn btn-record" id="actionBtn" onclick="toggleRecording()">🎙️ 准备就绪，开始配音</button>
 
       <canvas id="processCanvas" style="display: none;"></canvas>
@@ -992,34 +987,35 @@
       if (overlay) overlay.style.display = 'none';
     }
 
-    // 核心录制逻辑
+    // 核心录制逻辑 - 修复：优化 MIME Type 选择
     function getBestMimeType() {
-      const ua = navigator.userAgent;
-      // 只有Safari严格需要MP4
-      const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua);
+      // 1. 检测环境：是否为 Safari (不包含 Chrome 或 Android)
+      const ua = navigator.userAgent.toLowerCase();
+      const isSafari = ua.includes('safari') && !ua.includes('chrome') && !ua.includes('android');
 
+      // 2. 如果是 Safari，优先使用 mp4，因为 Safari 不支持 webm 录制
       if (isSafari) {
-        if (MediaRecorder.isTypeSupported("video/mp4")) return "video/mp4";
-        // Fallback
-        return "video/mp4";
+          return 'video/mp4';
       }
 
-      // Chrome/Firefox 优先使用 WebM 以保证时长信息正确
-      // Chrome直接录制MP4容易出现"文件很大但时长为1秒"的bug
-      const webmTypes = [
+      // 3. 如果是 Chrome/Firefox/Android，优先使用 WebM
+      // Chrome 生成的 MP4 是 Fragmented MP4，很多本地播放器无法正确读取时长，导致文件大但只能播1秒。
+      // 使用 WebM 可以完美解决这个问题。
+      const types = [
         "video/webm;codecs=vp9",
         "video/webm;codecs=vp8",
-        "video/webm"
+        "video/webm",
+        "video/mp4" // 最后的备选
       ];
-      for (const type of webmTypes) {
-        if (MediaRecorder.isTypeSupported(type)) return type;
-      }
 
-      // 如果都不支持，才尝试 MP4
-      if (MediaRecorder.isTypeSupported("video/mp4;codecs=avc1")) {
-        return "video/mp4;codecs=avc1";
+      for (const type of types) {
+        if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
+          console.log("Using MIME type:", type);
+          return type;
+        }
       }
-      return "";
+      // 默认回退
+      return 'video/webm';
     }
 
     function toggleRecording() {
@@ -1113,8 +1109,7 @@
       canvas.height = video.videoHeight;
 
       try {
-        // 使用 30fps 以获得更标准的帧率，避免 25fps 与 raf 不匹配导致的同步问题
-        canvasStream = canvas.captureStream(30);
+        canvasStream = canvas.captureStream(25);
       } catch(e) {
         console.error("Canvas captureStream failed:", e);
         alert("画面捕获失败：浏览器不支持Canvas流捕获。请尝试更新浏览器。");
@@ -1165,8 +1160,6 @@
       }
 
       recordedMimeType = getBestMimeType();
-      console.log("Recording with MIME Type:", recordedMimeType);
-
       try {
         mediaRecorder = recordedMimeType
           ? new MediaRecorder(combinedStream, { mimeType: recordedMimeType, videoBitsPerSecond: 2500000 })
@@ -1208,7 +1201,7 @@
       const startRecorderAndDraw = () => {
           // 启动录制器
           try {
-              mediaRecorder.start(500); // 500ms chunk
+              mediaRecorder.start(500); // 500ms 切片，有助于防止数据丢失
           } catch(e) {
               alert("录制启动失败"); return;
           }
@@ -1257,11 +1250,11 @@
           // 图片加载失败，跳过 Intro 模式
           console.warn("intro.png not found, skipping intro.");
           isIntroMode = false;
-          startRecorderAndDraw(); 
+          startRecorderAndDraw(); // 逻辑里会立刻被 setTimeout 覆盖，但没关系，至少能跑
       };
     }
 
-    // Canvas 绘制函数（修改版）
+    // Canvas 绘制函数
     function drawToCanvas(video, ctx, canvas) {
       if (!isRecording) {
         cancelAnimationFrame(animationFrameId);
@@ -1387,7 +1380,7 @@
       }, 30);
     }
 
-    // 生成结果
+    // 生成结果 - 修复：根据 MIME Type 正确设置扩展名
     function generateVideoAndShowResult() {
       if(recordedChunks.length === 0) {
         alert("录制失败：数据为空。可能是Canvas捕获失败或麦克风未授权。");
@@ -1397,9 +1390,12 @@
       }
 
       try {
-        // 使用实际录制时确定的 MimeType，如果没有则回退
-        const type = recordedMimeType || 'video/webm'; 
-        finalBlob = new Blob(recordedChunks, { type });
+        // 使用 mediaRecorder 实际使用的 mimeType，或者回退到 mp4
+        const type = mediaRecorder.mimeType || recordedMimeType || 'video/mp4';
+        
+        console.log("Generating video with MIME type:", type);
+        
+        finalBlob = new Blob(recordedChunks, { type: type });
         finalObjectURL = URL.createObjectURL(finalBlob);
 
         const preview = document.getElementById("previewVideo");
@@ -1407,15 +1403,15 @@
         preview.muted = false;
         preview.volume = 1.0;
 
-        const downloadBtn = document.getElementById("downloadLink");
-        
-        // 根据 MimeType 确定扩展名
+        // 根据实际类型确定扩展名
         let ext = '.mp4';
         if (type.includes('webm')) {
-          ext = '.webm';
+            ext = '.webm';
         }
+
         finalFilename = `Firstleap_Voice_${Date.now()}${ext}`;
 
+        const downloadBtn = document.getElementById("downloadLink");
         // 环境按钮配置
         setupSaveButton(downloadBtn);
 
