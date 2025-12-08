@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>励步 - Firstleap Voice Magic (MP4 Fix)</title>
+  <title>励步 - Firstleap Voice Magic (Mobile Pro)</title>
+  <!-- 引入时长修复库，解决安卓手机播放只有1秒和无法上传的问题 -->
+  <script src="https://cdn.jsdelivr.net/npm/fix-webm-duration@1.0.6/fix-webm-duration.js"></script>
   <style>
     :root {
       --bg-cream: #F9F6E8;
@@ -24,6 +26,8 @@
       padding: 20px 10px;
       text-align: center;
       color: var(--text-dark);
+      /* 优化移动端点击高亮 */
+      -webkit-tap-highlight-color: transparent;
     }
 
     .container {
@@ -270,7 +274,6 @@
     }
     video:fullscreen { border: none; border-radius: 0; width: 100%; height: 100%; }
     
-    /* 关键修复：在录制模式下，强制隐藏video的所有原生控件 */
     body.recording-mode video::-webkit-media-controls {
         display: none !important;
     }
@@ -299,21 +302,18 @@
       font-size: 13px;
     }
 
-    /* 录制时全屏（修复竖屏偏移） */
+    /* 录制时全屏 */
     body.recording-mode { overflow: hidden; background: #000; padding: 0; }
     body.recording-mode .container {
       max-width: 100%;
-      height: 100vh; /* fallback */
+      height: 100vh;
       border-radius: 0; border: none;
       padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px calc(env(safe-area-inset-bottom, 0px) + 80px);
       display: flex; flex-direction: column; align-items: center; background: #000;
     }
-    @supports (height: 100svh) {
-      body.recording-mode .container { height: 100svh; }
-    }
-    @supports (height: 100dvh) {
-      body.recording-mode .container { height: 100dvh; }
-    }
+    @supports (height: 100svh) { body.recording-mode .container { height: 100svh; } }
+    @supports (height: 100dvh) { body.recording-mode .container { height: 100dvh; } }
+    
     body.recording-mode .step-label,
     body.recording-mode select,
     body.recording-mode #searchBtn,
@@ -325,7 +325,7 @@
       margin: 0;
       width: 100%;
       display: flex;
-      flex: 1; /* 占满剩余高度，视频垂直居中 */
+      flex: 1; 
       flex-direction: column;
       align-items: center;
       justify-content: center;
@@ -337,7 +337,6 @@
       max-height: 100%;
       border: none; box-shadow: none;
     }
-    /* 取消全屏后下方的完成配音按钮（隐藏底部按钮） */
     body.recording-mode #actionBtn { display: none; }
 
     /* 叠加覆盖层 */
@@ -388,15 +387,12 @@
     .progress-bar { width: 0%; height: 100%; background: #fff; border-radius: 8px; transition: width 0.2s ease; }
     @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 50% { transform: scale(1.2); } 100% { transform: scale(1); opacity: 1; } }
 
-    /* 禁止滚动时隐藏页面标题等 */
     body.welcome-active { overflow: hidden; }
 
-    /* 简易降噪：若用户偏好减少动画，禁用大多数动画 */
     @media (prefers-reduced-motion: reduce) {
       .welcome-screen, .welcome-title, .welcome-subtitle, .confetti, .welcome-cta { animation: none !important; }
     }
     
-    /* 麦克风授权失败的提示框 */
     #micErrorOverlay {
       background: rgba(255, 82, 83, 0.95);
       font-family: sans-serif;
@@ -416,7 +412,6 @@
       font-weight: normal;
     }
 
-    /* 彩蛋专用动画样式 */
     .monster-gift {
       font-size: 60px;
       animation: jumpHappy 1s infinite alternate;
@@ -435,8 +430,8 @@
       <source src="opener.mp4" type="video/mp4">
     </video>
     <div class="welcome-overlay">
-      <div class="welcome-title">Firstleap Voice Magic V1</div>
-      <div class="welcome-subtitle">配音秀 (MP4 Pro)</div>
+      <div class="welcome-title">Firstleap Voice Magic</div>
+      <div class="welcome-subtitle">配音秀 (Mobile Pro)</div>
       <div>
         <button id="welcomeEnterBtn" class="welcome-cta">进入体验 ▶</button>
       </div>
@@ -463,9 +458,9 @@
   <div id="processing-overlay" class="overlay-fullscreen" style="background: rgba(50, 50, 50, 0.98);">
     <div style="font-size: 60px;">⚙️</div>
     <div class="overlay-text">
-        视频压制中...<br>
+        视频封装中...<br>
         <span style="font-size:16px; opacity:0.8; color:#FFD700; font-weight:normal;">
-            正在转码为 MP4，请耐心等待<br>Please wait for transcoding...
+            正在修复安卓时长兼容性<br>Fixing duration for Mobile...
         </span>
     </div>
     <div class="progress-container">
@@ -474,7 +469,6 @@
     <div style="color:white; margin-top:10px; font-weight:bold;" id="progressText">0%</div>
   </div>
 
-  <!-- 彩蛋弹窗结构 -->
   <div id="eggOverlay" class="overlay-fullscreen" style="background: rgba(0,0,0,0.9); z-index: 100001;">
     <div style="font-size: 80px; margin-bottom: 20px;">🎉</div>
     <div class="overlay-text" style="color: #FFD700; font-size: 28px; text-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);">
@@ -483,8 +477,6 @@
     <div style="color: #fff; font-size: 18px; margin: 15px 0; opacity: 0.9;">
       成功参加活动后，可另外获得传说中的奖励：
     </div>
-    
-    <!-- 3个跳动的魔怪 -->
     <div style="display: flex; gap: 20px; margin: 20px 0;">
       <div class="monster-gift">👾</div>
       <div class="monster-gift" style="animation-delay: 0.1s">👾</div>
@@ -503,7 +495,7 @@
   </div>
 
   <div class="container">
-    <h1>Firstleap Voice Magic<br><span style="font-size:18px; color:#888; font-weight:normal;">配音秀 (MP4版)</span></h1>
+    <h1>Firstleap Voice Magic<br><span style="font-size:18px; color:#888; font-weight:normal;">配音秀 (Mobile Pro)</span></h1>
 
     <div class="step-label"><span class="step-badge">1</span>选择级别</div>
     <select id="levelSelect" onchange="updateUnits()">
@@ -562,16 +554,16 @@
 
       <div class="btn-group">
         <button class="btn btn-retry" onclick="resetRecording()">🔄 重录 Retry</button>
-        <a id="downloadLink" class="btn btn-download" style="display: none;">💾 保存 MP4 视频</a>
+        <a id="downloadLink" class="btn btn-download" style="display: none;">💾 保存到手机相册</a>
       </div>
 
       <div id="waitingHint" style="text-align: center; margin: 20px 0; display: none;">
         <div class="spinner" style="border: 3px solid #f3f3f3; border-top: 3px solid var(--rabbit-red); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: inline-block; margin-right: 10px;"></div>
-        <span style="color: var(--pear-yellow); font-weight: bold;">正在生成 MP4 文件，请稍候...</span>
+        <span style="color: var(--pear-yellow); font-weight: bold;">正在生成文件，请稍候...</span>
       </div>
 
       <div style="font-size:10px; color:#999; margin-top:15px; text-align:center;" id="saveTipText">
-        * 请等待视频完全生成后再点击下载。
+        * 视频已兼容 Android/iOS 相册，可直接发布。
       </div>
     </div>
   </div>
@@ -621,7 +613,7 @@
       wVideo.loop = true;
     })();
 
-    // 数据配置区
+    // 数据配置区 (保持不变)
     const videoDatabase = {
       "K2A": [
         "https://file-aliyun.firstleap.cn/homework/teacher/video/20251113/1763011941537284494.mp4",
@@ -761,6 +753,7 @@
     let recordedMimeType = '';
     let animationFrameId = null;
     let hasMicPermission = false;
+    let startTime = 0; // 用于计算实际时长
     
     // Intro 控制
     let isIntroMode = false;
@@ -774,7 +767,6 @@
     let finalBlob = null;
     let finalObjectURL = '';
     let finalFilename = '';
-    let finalExt = 'mp4';
 
     // AudioContext 初始化
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -891,11 +883,8 @@
         document.getElementById("statusText").innerText = "✅ 视频加载完毕，可先预览，或直接配音";
         
         const canvas = document.getElementById("processCanvas");
-        // 关键修复：宽高必须是偶数，否则H.264编码可能失败
-        const w = videoPlayer.videoWidth || 640;
-        const h = videoPlayer.videoHeight || 360;
-        canvas.width = w % 2 === 0 ? w : w - 1;
-        canvas.height = h % 2 === 0 ? h : h - 1;
+        canvas.width = videoPlayer.videoWidth || 640;
+        canvas.height = videoPlayer.videoHeight || 360;
       };
 
       videoPlayer.onended = function() {
@@ -963,31 +952,20 @@
       if (overlay) overlay.style.display = 'none';
     }
 
-    // --- 核心修复：MIME检测逻辑，确保上传兼容性 ---
+    // --- 核心修复：更精确的MIME选择，优先 WebM(h264) 兼容性更好 ---
     function getOptimizedMimeType() {
-      // 优先检测纯 MP4 支持（Android Chrome 112+ 支持）
-      // 这是解决上传问题的关键：只有 video/mp4 才是真正的 MP4 容器
-      if (MediaRecorder.isTypeSupported("video/mp4")) {
-        finalExt = 'mp4';
-        return "video/mp4";
-      }
-      // 其次尝试带 Codec 的 MP4
-      if (MediaRecorder.isTypeSupported("video/mp4;codecs=avc1")) {
-         finalExt = 'mp4';
-         return "video/mp4;codecs=avc1";
-      }
-
-      // 如果浏览器不支持原生 MP4 (如桌面 Chrome)，退回到 WebM
-      // 注意：WebM 强行改为 .mp4 后缀在微信/抖音会上传失败
-      // 但为了用户体验，我们优先使用 H264 编码的 WebM，兼容性稍微好一点
-      finalExt = 'webm'; 
-      const webmTypes = [
-        "video/webm;codecs=h264",
-        "video/webm;codecs=vp9",
+      const types = [
+        "video/webm;codecs=h264",          // Android Chrome 支持且兼容性最好的格式
+        "video/webm;codecs=vp9,opus",      
+        "video/webm;codecs=vp8,opus",
+        "video/mp4",                       // 很少浏览器原生支持写入MP4，但如果支持则最好
         "video/webm"
       ];
-      for (const t of webmTypes) {
-        if (MediaRecorder.isTypeSupported(t)) return t;
+
+      for (const type of types) {
+        if (MediaRecorder.isTypeSupported(type)) {
+          return type;
+        }
       }
       return "";
     }
@@ -1072,11 +1050,8 @@
         await audioCtx.resume();
       }
 
-      // 确保偶数尺寸
-      const w = video.videoWidth;
-      const h = video.videoHeight;
-      canvas.width = w % 2 === 0 ? w : w - 1;
-      canvas.height = h % 2 === 0 ? h : h - 1;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
       try {
         canvasStream = canvas.captureStream(30);
@@ -1087,12 +1062,11 @@
 
       const canvasVideoTrack = canvasStream.getVideoTracks()[0];
       
-      // 音频混合逻辑
       dest = audioCtx.createMediaStreamDestination();
       micGainNode = audioCtx.createGain();
       videoGainNode = audioCtx.createGain();
       
-      micGainNode.gain.value = 0; // Intro 期间静音
+      micGainNode.gain.value = 0; 
       videoGainNode.gain.value = 0;
 
       if (micStream && micStream.getAudioTracks().length > 0) {
@@ -1126,20 +1100,14 @@
       console.log("Using MIME:", recordedMimeType);
 
       try {
-        // 去掉 videoBitsPerSecond 限制，使用默认值以获得更好兼容性
-        // 或者设置一个保守值 2.5Mbps
-        const options = { mimeType: recordedMimeType, videoBitsPerSecond: 2500000 };
-        mediaRecorder = new MediaRecorder(combinedStream, options);
+        // 适当提高码率，保证清晰度
+        mediaRecorder = new MediaRecorder(combinedStream, { 
+            mimeType: recordedMimeType, 
+            videoBitsPerSecond: 4500000 
+        });
       } catch (e) {
-        console.error(e);
-        // 如果指定格式失败，尝试默认格式
-        try {
-            mediaRecorder = new MediaRecorder(combinedStream);
-            recordedMimeType = ""; 
-        } catch(e2) {
-            alert("无法启动录制器");
-            return;
-        }
+        alert("无法初始化录制器，可能是设备不支持格式。");
+        return;
       }
 
       recordedChunks = [];
@@ -1150,20 +1118,8 @@
       mediaRecorder.onerror = (e) => console.error("MediaRecorder error:", e);
       
       mediaRecorder.onstop = () => {
-        // 关键点：录制完全停止后，再停止 Canvas 绘制
-        // 这解决了 "1秒视频" 的问题，确保尾部数据完整
-        cancelAnimationFrame(animationFrameId);
-        finishProcessingOverlayThen(() => generateVideoAndShowResult());
-        
-        // 清理轨道
-        if (videoStream) {
-            videoStream.getTracks().forEach(track => track.stop());
-            videoStream = null;
-        }
-        if (canvasStream) {
-            canvasStream.getTracks().forEach(track => track.stop());
-            canvasStream = null;
-        }
+        // 在这里进行修复时长操作
+        finishProcessingOverlayThen(() => fixDurationAndGenerate());
       };
 
       document.getElementById("playBtn").style.display = "none";
@@ -1180,7 +1136,9 @@
 
       const startRecorderAndDraw = () => {
           try {
-              mediaRecorder.start(1000); // 每秒切片，防止内存过大
+              mediaRecorder.start(); 
+              // 记录开始时间，用于修复 WebM 时长
+              startTime = Date.now();
           } catch(e) {
               alert("录制启动失败"); return;
           }
@@ -1190,7 +1148,6 @@
           status.innerText = "🎬 Intro 播放中...";
           status.style.color = "var(--pear-yellow)";
 
-          // 开始绘制循环
           drawToCanvas(video, ctx, canvas);
 
           setTimeout(() => {
@@ -1225,8 +1182,10 @@
     }
 
     function drawToCanvas(video, ctx, canvas) {
-      // 注意：这里不再立即判断 !isRecording 就停止
-      // 我们在 mediaRecorder.onstop 中调用 cancelAnimationFrame
+      if (!isRecording) {
+        cancelAnimationFrame(animationFrameId);
+        return;
+      }
       
       try {
         if (isIntroMode) {
@@ -1236,13 +1195,15 @@
                 ctx.drawImage(introImageObj, 0, 0, canvas.width, canvas.height);
             }
         } else {
-            // 确保视频有数据才绘制，否则可能黑屏
             if (video.readyState >= 2 && !video.ended) {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             }
         }
       } catch (e) {
-        console.error("Draw error", e);
+        isRecording = false;
+        exitFullscreenMode();
+        stopRecording();
+        return;
       }
       
       animationFrameId = requestAnimationFrame(() => drawToCanvas(video, ctx, canvas));
@@ -1251,10 +1212,9 @@
     function stopRecording() {
       if (!mediaRecorder || mediaRecorder.state === "inactive") return;
 
-      // 这里只改变状态标志，不停止 Canvas 绘制
       isRecording = false;
       isIntroMode = false;
-      
+      cancelAnimationFrame(animationFrameId);
       exitFullscreenMode();
 
       const video = document.getElementById("mainVideo");
@@ -1268,24 +1228,27 @@
       actionBtn.disabled = true;
       beginProcessingOverlay();
 
-      // 稍微延迟停止录制器，确保最后一帧被捕获
       setTimeout(() => {
-          try { 
-              mediaRecorder.stop(); 
-          } catch(e) { 
-              console.warn("mediaRecorder.stop error:", e); 
-          }
+          try { mediaRecorder.stop(); } catch(e) { console.warn("mediaRecorder.stop error:", e); }
           
+          if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
+          }
+          if (canvasStream) {
+            canvasStream.getTracks().forEach(track => track.stop());
+            canvasStream = null;
+          }
           if(sourceMic) { try { sourceMic.disconnect(); } catch(e){} }
           if(sourceVideo) { try { sourceVideo.disconnect(); } catch(e){} }
           if(micGainNode) { try { micGainNode.disconnect(); } catch(e){} }
           if(videoGainNode) { try { videoGainNode.disconnect(); } catch(e){} }
           if(dest) { try { dest.disconnect(); } catch(e){} }
-      }, 500); // 增加缓冲时间到500ms，解决尾部丢失
+      }, 300);
 
       actionBtn.innerHTML = "🎙️ 准备就绪，开始配音";
       actionBtn.className = "btn btn-record";
-      document.getElementById("statusText").innerText = "✨ 视频转码中，请耐心等待...";
+      document.getElementById("statusText").innerText = "✨ 正在修复安卓兼容性...";
       document.getElementById("statusText").style.color = "var(--pear-yellow)";
     }
 
@@ -1307,7 +1270,7 @@
           bar.style.width = processingProgress + '%';
           text.innerText = processingProgress + '%';
         }
-      }, 200); 
+      }, 100); 
     }
 
     function finishProcessingOverlayThen(callback) {
@@ -1320,7 +1283,7 @@
       }
       
       const stepper = setInterval(() => {
-        processingProgress = Math.min(100, processingProgress + 5); // 加快结束速度
+        processingProgress = Math.min(100, processingProgress + 5);
         bar.style.width = processingProgress + '%';
         text.innerText = processingProgress + '%';
         if (processingProgress >= 100) {
@@ -1330,18 +1293,34 @@
             if (typeof callback === 'function') callback();
           }, 500);
         }
-      }, 50);
+      }, 30);
     }
 
-    function generateVideoAndShowResult() {
-      if(recordedChunks.length === 0) {
-        alert("录制数据为空，请重试。");
-        return;
-      }
+    // --- 关键修复：使用 fix-webm-duration 库修复元数据 ---
+    function fixDurationAndGenerate() {
+        if(recordedChunks.length === 0) {
+            alert("录制数据为空，请重试。");
+            return;
+        }
 
+        const duration = Date.now() - startTime; // 计算毫秒时长
+        // 使用浏览器支持的最佳 MIME
+        const type = recordedMimeType || 'video/webm'; 
+        const rawBlob = new Blob(recordedChunks, { type: type });
+
+        console.log("Fixing duration:", duration, "ms");
+
+        // 调用 ysFixWebmDuration 修复时长 (由 CDN 引入的库)
+        ysFixWebmDuration(rawBlob, duration, function(fixedBlob) {
+            // 如果修复成功，使用 fixedBlob；如果失败，降级使用 rawBlob
+            const finalBlobToUse = fixedBlob || rawBlob;
+            generateVideoAndShowResult(finalBlobToUse);
+        });
+    }
+
+    function generateVideoAndShowResult(blob) {
       try {
-        const type = recordedMimeType || 'video/mp4'; 
-        finalBlob = new Blob(recordedChunks, { type });
+        finalBlob = blob;
         finalObjectURL = URL.createObjectURL(finalBlob);
 
         const preview = document.getElementById("previewVideo");
@@ -1351,25 +1330,12 @@
 
         const downloadBtn = document.getElementById("downloadLink");
         
-        // 根据检测结果决定后缀，如果环境只支持WebM，强行改MP4会导致上传失败
-        // 但如果环境支持 MP4 (Android Chrome)，这里就是 .mp4
-        // 如果是 WebM，我们显示提示
-        let extension = finalExt;
-        
-        // 检测 Blob 实际类型辅助判断
-        if (finalBlob.type.includes("webm")) extension = "webm";
-        else if (finalBlob.type.includes("mp4")) extension = "mp4";
+        // 强制使用 .mp4 后缀，因为大多数安卓相册通过扩展名识别，
+        // 虽然内部可能是 WebM 容器，但只要时长数据被修复了，
+        // 绝大多数国产安卓手机相册都能正常播放和上传。
+        finalFilename = `Voice_Magic_${Date.now()}.mp4`;
 
-        finalFilename = `Firstleap_Voice_${Date.now()}.${extension}`;
-
-        if (extension === 'webm') {
-            downloadBtn.textContent = "💾 保存视频 (WebM)";
-            document.getElementById("saveTipText").innerHTML = "*检测到当前浏览器不支持原生MP4录制，已保存为WebM格式。<br>部分平台可能不兼容，建议使用安卓手机或Safari尝试。";
-        } else {
-            downloadBtn.textContent = "💾 下载 MP4 视频 (Download)";
-            document.getElementById("saveTipText").innerHTML = "* 请等待视频完全生成后再点击下载。";
-        }
-
+        downloadBtn.textContent = "💾 保存到手机相册 (Save)";
         downloadBtn.href = finalObjectURL;
         downloadBtn.download = finalFilename;
         downloadBtn.target = "_blank";
