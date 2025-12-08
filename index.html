@@ -393,7 +393,7 @@
     </video>
     <div class="welcome-overlay">
       <div class="welcome-title">Firstleap Voice Magic</div>
-      <div class="welcome-subtitle">配音秀 (Share Edition) 111</div>
+      <div class="welcome-subtitle">配音秀 (Share Edition)</div>
       <div><button id="welcomeEnterBtn" class="welcome-cta">进入体验 ▶</button></div>
     </div>
   </div>
@@ -765,12 +765,10 @@
       videoPlayer.volume = 1.0;
       
       videoPlayer.onprogress = function() {
-        // [修复点 1] 录制中不更新缓冲提示
-        if (isRecording) return;
-        
         if (videoPlayer.buffered.length > 0 && videoPlayer.duration > 0) {
           const percent = Math.min(100, Math.floor((videoPlayer.buffered.end(0) / videoPlayer.duration) * 100));
           document.getElementById("loadingText").innerText = "视频缓冲中 " + percent + "%";
+          // 同步状态覆盖
           setStatusOverlay("视频缓冲中 " + percent + "%");
         }
       };
@@ -830,12 +828,14 @@
     }
 
     function getOptimizedMimeTypeAndExt() {
+      // 优先 MP4 容器
       if (MediaRecorder.isTypeSupported("video/mp4;codecs=avc1")) {
          return { type: "video/mp4;codecs=avc1", ext: "mp4" };
       }
       if (MediaRecorder.isTypeSupported("video/mp4")) {
          return { type: "video/mp4", ext: "mp4" };
       }
+      // 兼容性最好的 WebM 配置，但为了兼容微信，我们保存为 mp4
       if (MediaRecorder.isTypeSupported("video/webm;codecs=h264")) {
          return { type: "video/webm;codecs=h264", ext: "mp4" }; 
       }
@@ -896,13 +896,13 @@
       const canvas = document.getElementById("processCanvas");
       const ctx = canvas.getContext("2d");
 
-      // [修复点 2] 确保音频环境活跃，否则录制无声
+      // [修复] 强制唤醒 AudioContext，防止被浏览器挂起导致静音
       if (audioCtx.state === 'suspended') await audioCtx.resume();
       
       canvas.width = video.videoWidth; canvas.height = video.videoHeight;
       try { canvasStream = canvas.captureStream(30); } catch(e) { alert("浏览器版本过低"); return; }
 
-      // 音频混合
+      // 音频混合节点
       dest = audioCtx.createMediaStreamDestination();
       micGainNode = audioCtx.createGain(); micGainNode.gain.value = 0;
       videoGainNode = audioCtx.createGain(); videoGainNode.gain.value = 0;
@@ -912,29 +912,29 @@
         sourceMic.connect(micGainNode).connect(dest);
       }
       
-      // [修复点 2] 确保视频音源连接正确，并防止重复创建
       try {
-        if (!video._elementAudioSource) {
-           video._elementAudioSource = audioCtx.createMediaElementSource(video);
-        }
+        if (!video._elementAudioSource) video._elementAudioSource = audioCtx.createMediaElementSource(video);
         sourceVideo = video._elementAudioSource;
         sourceVideo.connect(videoGainNode).connect(dest);
         
-        // [关键修复] 连接到扬声器，否则录制时用户听不到，且部分浏览器会静音处理
+        // [核心修复] 必须连接到 audioCtx.destination (扬声器)，否则 AudioContext 可能不会处理数据，导致录制无声
         dest.connect(audioCtx.destination);
       } catch(e) {
-         console.error("Audio wiring error:", e);
+          console.error("Audio routing error:", e);
       }
 
-      // [修复点 2] 确保 MediaRecorder 使用混合后的音轨
+      // [核心修复] 使用混合后的音轨 (dest.stream)，而不是回退
+      // 如果使用回退逻辑，会导致只录到麦克风，而没有视频原声
       const mixedAudioTrack = dest.stream.getAudioTracks()[0];
       const tracks = [canvasStream.getVideoTracks()[0]];
+      
       if (mixedAudioTrack) {
           tracks.push(mixedAudioTrack);
       } else if (micStream && micStream.getAudioTracks()[0]) {
+          // 仅作为最后的兜底
           tracks.push(micStream.getAudioTracks()[0]);
       }
-
+      
       const combinedStream = new MediaStream(tracks);
 
       const config = getOptimizedMimeTypeAndExt();
@@ -974,14 +974,19 @@
         document.getElementById("statusText").innerText = "🎬 Intro 播放中...";
         drawToCanvas(video, ctx, canvas);
         
+        // 3 秒 intro 后，切换到真实录音
         setTimeout(() => {
           isIntroMode = false;
-          // [修复点 1] 片头结束立即设置录制中状态
-          setStatusOverlay("🔴 录制中 (Recording)...");
+          setStatusOverlay("正在配音中");
+          // 打开音量
+          micGainNode.gain.value = 1.5; 
+          videoGainNode.gain.value = 1.2;
           
-          micGainNode.gain.value = 1.5; videoGainNode.gain.value = 1.2;
-          video.currentTime = 0; video.volume = 1.0; video.controls = false;
+          video.currentTime = 0; 
+          video.volume = 1.0; 
+          video.controls = false;
           video.play().catch(console.error);
+          
           document.getElementById("statusText").innerText = "🔴 录制中 (Recording)...";
           video.onended = stopRecording;
         }, 3000);
@@ -998,7 +1003,6 @@
           ctx.fillStyle = "#000"; ctx.fillRect(0, 0, canvas.width, canvas.height);
           if (introImageObj && introImageObj.complete) {
             ctx.drawImage(introImageObj, 0, 0, canvas.width, canvas.height);
-          } else {
           }
         } else if (video.readyState >= 2 && !video.ended) {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
