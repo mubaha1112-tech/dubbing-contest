@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>励步 - Firstleap Voice Magic (Pro Fixed)</title>
+  <title>励步 - Firstleap Voice Magic (Share Edition)</title>
   <style>
     :root {
       --bg-cream: #F9F6E8;
@@ -246,12 +246,15 @@
       animation: pulse 1.5s infinite; position: relative; z-index: 1002;
     }
     .btn-group { display: flex; gap: 15px; margin-top: 15px; }
-    .btn-download {
+    
+    /* 分享按钮样式优化 */
+    .btn-share {
       background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
       text-decoration: none; line-height: 1.5; flex: 1; display: flex; align-items: center; justify-content: center;
       cursor: pointer; color: #fff; font-weight: bold; border-radius: 25px; box-shadow: 0 6px 0 rgba(0,0,0,0.1);
       font-size: 18px; padding: 16px; border: none;
     }
+    
     .btn-retry { background: #dfe6e9; color: #636e72; box-shadow: 0 4px 0 #b2bec3; flex: 1; }
 
     @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
@@ -368,8 +371,8 @@
       <source src="opener.mp4" type="video/mp4">
     </video>
     <div class="welcome-overlay">
-      <div class="welcome-title">Firstleap Voice Magic 111</div>
-      <div class="welcome-subtitle">配音秀 (Fix Pro)</div>
+      <div class="welcome-title">Firstleap Voice Magic 222</div>
+      <div class="welcome-subtitle">配音秀 (Share Edition)</div>
       <div><button id="welcomeEnterBtn" class="welcome-cta">进入体验 ▶</button></div>
     </div>
   </div>
@@ -411,7 +414,7 @@
   </div>
 
   <div class="container">
-    <h1>Firstleap Voice Magic<br><span style="font-size:18px; color:#888; font-weight:normal;">配音秀 (Pro版)</span></h1>
+    <h1>Firstleap Voice Magic<br><span style="font-size:18px; color:#888; font-weight:normal;">配音秀 (Share版)</span></h1>
 
     <div class="step-label"><span class="step-badge">1</span>选择级别</div>
     <select id="levelSelect" onchange="updateUnits()">
@@ -454,7 +457,10 @@
 
       <div class="btn-group">
         <button class="btn btn-retry" onclick="resetRecording()">🔄 重录 Retry</button>
-        <a id="downloadLink" class="btn btn-download" style="display: none;">💾 保存视频</a>
+        <!-- 修改了这里的按钮和ID -->
+        <button id="shareBtn" class="btn btn-share" style="display: none;" onclick="handleShareOrDownload()">📤 分享/保存视频</button>
+        <!-- 隐藏的下载链接作为后备方案 -->
+        <a id="downloadLinkFallback" style="display:none;"></a>
       </div>
 
       <div id="waitingHint" style="text-align: center; margin: 20px 0; display: none;">
@@ -641,7 +647,7 @@
     let videoGainNode = null;
     let isRecording = false;
     let recordedMimeType = ''; 
-    let recordedExtension = ''; // 新增：保存实际的文件后缀
+    let recordedExtension = ''; 
     let animationFrameId = null;
     let hasMicPermission = false;
     let isIntroMode = false;
@@ -776,24 +782,25 @@
       if (overlay) overlay.style.display = 'none';
     }
 
-    // --- 核心修复：更智能的 MIME 类型选择 ---
+    // --- 核心修复：更智能的 MIME 类型选择（优先兼容微信/抖音） ---
     function getOptimizedMimeTypeAndExt() {
-      // 优先级：MP4 -> WebM (H264) -> WebM (Standard)
-      // 注意：如果浏览器只能录 WebM，必须给 .webm 后缀，否则安卓无法播放
-      
+      // 抖音和微信最喜欢 video/mp4 (H.264)
       if (MediaRecorder.isTypeSupported("video/mp4;codecs=avc1")) {
          return { type: "video/mp4;codecs=avc1", ext: "mp4" };
       }
       if (MediaRecorder.isTypeSupported("video/mp4")) {
          return { type: "video/mp4", ext: "mp4" };
       }
+      // 安卓 Chrome 通常支持这个，虽然封装是 WebM，但我们可以强制改名为 .mp4
+      // 大部分现代播放器（包括微信内部）能容忍容器头不匹配，只要编码是 H.264
       if (MediaRecorder.isTypeSupported("video/webm;codecs=h264")) {
-         return { type: "video/webm;codecs=h264", ext: "webm" };
+         return { type: "video/webm;codecs=h264", ext: "mp4" }; 
       }
+      // 回退方案
       if (MediaRecorder.isTypeSupported("video/webm")) {
-         return { type: "video/webm", ext: "webm" };
+         return { type: "video/webm", ext: "mp4" }; // 强行改名 mp4 碰运气，比 webm 发不出去好
       }
-      return { type: "", ext: "webm" }; // 默认回退
+      return { type: "", ext: "mp4" }; 
     }
 
     function toggleRecording() {
@@ -874,10 +881,10 @@
         dest.stream.getAudioTracks()[0] || (micStream ? micStream.getAudioTracks()[0] : null)
       ].filter(t => t));
 
-      // --- 关键修复：获取正确的类型和后缀 ---
+      // --- 关键修复：获取最佳的 MIME 类型并强制使用 .mp4 后缀 ---
       const config = getOptimizedMimeTypeAndExt();
       recordedMimeType = config.type;
-      recordedExtension = config.ext; 
+      recordedExtension = config.ext; // 始终是 mp4
       console.log(`Recording as: ${recordedMimeType}, saving as .${recordedExtension}`);
 
       try {
@@ -904,7 +911,7 @@
       // Intro 逻辑
       introImageObj = new Image();
       introImageObj.crossOrigin = "anonymous";
-      introImageObj.src = "intro.png"; // 需确保图片存在或处理 onerror
+      introImageObj.src = "intro.png"; 
       
       const start = () => {
         mediaRecorder.start();
@@ -958,7 +965,6 @@
         mediaRecorder.stop();
         if(videoStream) videoStream.getTracks().forEach(t => t.stop());
         if(canvasStream) canvasStream.getTracks().forEach(t => t.stop());
-        // 清理音频连接...
       }, 500);
       
       actionBtn.innerHTML = "🎙️ 准备就绪，开始配音";
@@ -997,7 +1003,6 @@
     function generateVideoAndShowResult() {
       if(recordedChunks.length === 0) { alert("录制失败，无数据"); return; }
 
-      // --- 关键修复：使用Blob构造时匹配录制类型 ---
       const blobType = recordedMimeType || 'video/webm';
       finalBlob = new Blob(recordedChunks, { type: blobType });
       finalObjectURL = URL.createObjectURL(finalBlob);
@@ -1005,28 +1010,54 @@
       const preview = document.getElementById("previewVideo");
       preview.src = finalObjectURL;
       
-      // --- 关键修复：动态生成后缀名 ---
-      // 如果录制的是 WebM，必须保存为 .webm，安卓才能播放
-      const ext = recordedExtension || 'webm';
-      const filename = `Firstleap_Voice_${Date.now()}.${ext}`;
-
-      const downloadBtn = document.getElementById("downloadLink");
-      downloadBtn.textContent = `💾 保存视频 (.${ext})`;
-      downloadBtn.href = finalObjectURL;
-      downloadBtn.download = filename;
-      downloadBtn.style.display = 'none';
+      const shareBtn = document.getElementById("shareBtn");
+      shareBtn.style.display = 'none';
 
       document.getElementById("resultArea").style.display = "block";
       document.getElementById("waitingHint").style.display = "block";
       document.getElementById("statusText").innerText = "🎉 制作成功！Excellent!";
       
-      // 延时显示下载按钮，确保Blob写入完成
       setTimeout(() => {
         document.getElementById("waitingHint").style.display = "none";
-        downloadBtn.style.display = "flex";
+        shareBtn.style.display = "flex";
       }, 1000);
       
       document.getElementById("resultArea").scrollIntoView({behavior: "smooth"});
+    }
+
+    // --- 新增：分享或保存视频的逻辑 ---
+    async function handleShareOrDownload() {
+      if (!finalBlob) return;
+      
+      // 构造文件名，强制使用 .mp4 后缀以兼容微信/抖音
+      const filename = `Firstleap_Voice_${Date.now()}.mp4`;
+      
+      // 检查浏览器是否支持原生文件分享
+      if (navigator.share && navigator.canShare) {
+        // 创建文件对象，强制标识为 video/mp4 (即使底层容器可能是 webm)
+        // 这样做是为了欺骗系统分享菜单，允许发送到微信
+        const file = new File([finalBlob], filename, { type: "video/mp4" });
+        
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'Firstleap配音秀',
+              text: '快来看看我的英语配音作品！'
+            });
+            return; // 分享成功，不再执行下载
+          } catch (err) {
+            console.log("分享取消或失败，尝试回退到下载:", err);
+            // 用户可能取消了分享，或者分享失败，此时回退到普通下载
+          }
+        }
+      }
+
+      // 回退方案：传统下载
+      const downloadLink = document.getElementById("downloadLinkFallback");
+      downloadLink.href = finalObjectURL;
+      downloadLink.download = filename;
+      downloadLink.click();
     }
 
     function togglePauseDuringRecording() {
