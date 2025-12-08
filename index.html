@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>励步 - Firstleap Voice Magic</title>
+  <title>励步 - Firstleap Voice Magic (Chrome Pro)</title>
   <style>
     :root {
       --bg-cream: #F9F6E8;
@@ -426,8 +426,6 @@
       0% { transform: translateY(0) rotate(-10deg); }
       100% { transform: translateY(-20px) rotate(10deg); }
     }
-
-
   </style>
 </head>
 <body class="welcome-active">
@@ -438,7 +436,7 @@
     </video>
     <div class="welcome-overlay">
       <div class="welcome-title">Firstleap Voice Magic</div>
-      <div class="welcome-subtitle">配音秀 v1</div>
+      <div class="welcome-subtitle">配音秀 (Chrome 优化版)</div>
       <div>
         <button id="welcomeEnterBtn" class="welcome-cta">进入体验 ▶</button>
       </div>
@@ -471,15 +469,6 @@
     <div style="color:white; margin-top:10px; font-weight:bold;" id="progressText">0%</div>
   </div>
 
-  <div id="wxHintOverlay" class="overlay-fullscreen" style="background: rgba(0,0,0,0.92);">
-    <div style="color:#fff; font-size:22px; font-weight:900; margin-bottom:10px;" id="saveHintTitle">长按保存视频/音频</div>
-    <div style="color:#fff; font-size:14px; opacity:0.9; max-width:520px;" id="saveHintText">
-      请 <b>长按</b> 下方的视频播放器，<br>在弹出的菜单中选择 <b>"存储视频"</b> 即可保存到相册。
-    </div>
-    <video id="wxHintVideo" playsinline webkit-playsinline controls style="width:88%; max-width:520px; border-radius:12px; background:#000; margin-top:14px;"></video>
-    <button class="btn btn-retry" onclick="closeWxHint()" style="width:220px; margin-top:16px;">我知道了</button>
-  </div>
-
   <!-- 彩蛋弹窗结构 -->
   <div id="eggOverlay" class="overlay-fullscreen" style="background: rgba(0,0,0,0.9); z-index: 100001;">
     <div style="font-size: 80px; margin-bottom: 20px;">🎉</div>
@@ -509,7 +498,7 @@
   </div>
 
   <div class="container">
-    <h1>Firstleap Voice Magic<br><span style="font-size:18px; color:#888; font-weight:normal;">配音秀</span></h1>
+    <h1>Firstleap Voice Magic<br><span style="font-size:18px; color:#888; font-weight:normal;">配音秀 (Chrome版)</span></h1>
 
     <div class="step-label"><span class="step-badge">1</span>选择级别</div>
     <select id="levelSelect" onchange="updateUnits()">
@@ -541,17 +530,15 @@
         您的浏览器不支持视频标签。
       </video>
 
-      <!-- 右上角覆盖层：仅显示暂停按钮，取消"完成配音"按钮 -->
+      <!-- 右上角覆盖层 -->
       <div id="recordOverlay" class="record-overlay" aria-label="录制控制" style="display:none;">
         <button id="pauseToggleBtn" class="btn pause" onclick="togglePauseDuringRecording()">暂停</button>
       </div>
 
-      <!-- 人性化：佩戴耳机提示（可一直显示，鼓励配音时佩戴耳机） -->
       <div class="tip" style="margin-top: 6px;">🎧 <b>温馨提示：</b>配音前请佩戴耳机，以防回声啸叫！</div>
       <div class="status-text" id="statusText"></div>
 
       <button class="btn btn-play" id="playBtn" onclick="togglePreview()">▶️ 预览原片 Preview</button>
-      <!-- 修复：按钮始终由主按钮控制开始/停止 -->
       <button class="btn btn-record" id="actionBtn" onclick="toggleRecording()">🎙️ 准备就绪，开始配音</button>
 
       <canvas id="processCanvas" style="display: none;"></canvas>
@@ -579,7 +566,7 @@
       </div>
 
       <div style="font-size:10px; color:#999; margin-top:15px; text-align:center;" id="saveTipText">
-        * iOS Safari：点击下方"保存/分享视频"，在系统分享面板中选择"存储视频"保存到相册。
+        * 推荐使用电脑 Chrome 或 VLC 播放器观看下载的视频。
       </div>
     </div>
   </div>
@@ -592,7 +579,6 @@
       const skipBtn = document.getElementById('welcomeSkipBtn');
       const enterBtn = document.getElementById('welcomeEnterBtn');
 
-      // 彩纸/彩纸
       const colors = ['#fff176', '#ff8a80', '#80d8ff', '#ffd180', '#ea80fc', '#a7ffeb'];
       for (let i = 0; i < 18; i++) {
         const c = document.createElement('div');
@@ -614,14 +600,12 @@
         if (welcome.classList.contains('hidden')) return;
         welcome.classList.add('hidden');
         document.body.classList.remove('welcome-active');
-        // 防止视频继续占用解码资源
         try { wVideo.pause(); } catch(e){}
         setTimeout(() => {
           welcome.style.display = 'none';
         }, 650);
       };
 
-      // 进入按钮请求麦克风权限后进入
       enterBtn.addEventListener('click', async () => {
         await checkMicPermissionAndResumeAudio();
         hideWelcome();
@@ -773,7 +757,7 @@
     let animationFrameId = null;
     let hasMicPermission = false;
     
-    // 新增变量：控制 Intro 和 绘制
+    // Intro 控制
     let isIntroMode = false;
     let introImageObj = null;
 
@@ -786,19 +770,6 @@
     let finalObjectURL = '';
     let finalFilename = '';
 
-    // 环境检测
-    const ua = navigator.userAgent || '';
-    const isWeChat = /MicroMessenger/i.test(ua);
-    const isIOS = /iPhone|iPad|iPod/i.test(ua);
-    const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua);
-
-    const supportsFileShare = (() => {
-      try {
-        const testFile = new File(["x"], "x.txt", { type: "text/plain" });
-        return !!(navigator.canShare && navigator.canShare({ files: [testFile] }));
-      } catch (e) { return false; }
-    })();
-
     // AudioContext 初始化
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     function initializeAudioContext() {
@@ -809,11 +780,9 @@
 
     async function checkMicPermissionAndResumeAudio() {
       initializeAudioContext();
-
       if (audioCtx.state === 'suspended') {
         try { await audioCtx.resume(); } catch(e) { console.warn("AudioContext resume failed:", e); }
       }
-
       if (hasMicPermission && micStream) return true;
 
       try {
@@ -832,13 +801,11 @@
     }
 
     function showMicErrorHint() {
-      const overlay = document.getElementById('micAuthErrorOverlay');
-      overlay.style.display = 'flex';
+      document.getElementById('micAuthErrorOverlay').style.display = 'flex';
     }
 
     function closeMicErrorHint() {
-      const overlay = document.getElementById('micAuthErrorOverlay');
-      overlay.style.display = 'none';
+      document.getElementById('micAuthErrorOverlay').style.display = 'none';
     }
 
     // 初始化级别和单元
@@ -898,8 +865,6 @@
       videoPlayer.src = url;
       videoPlayer.load();
       videoPlayer.volume = 1.0;
-      
-      // 重置 controls
       videoPlayer.controls = true;
 
       videoPlayer.onprogress = function() {
@@ -919,7 +884,6 @@
         playBtn.style.display = "block";
         document.getElementById("statusText").innerText = "✅ 视频加载完毕，可先预览，或直接配音";
         
-        // 关键：视频加载后，设置Canvas尺寸以匹配视频
         const canvas = document.getElementById("processCanvas");
         canvas.width = videoPlayer.videoWidth || 640;
         canvas.height = videoPlayer.videoHeight || 360;
@@ -941,8 +905,7 @@
 
       videoPlayer.onerror = function() {
         loader.style.display = "none";
-        alert("视频加载失败！原因可能是网络问题或跨域限制。如果视频无法加载，请联系管理员检查服务器CORS设置。");
-        document.getElementById("statusText").innerText = "❌ 视频加载失败";
+        alert("视频加载失败！");
       };
 
       videoContainer.scrollIntoView({behavior: "smooth"});
@@ -973,7 +936,7 @@
       const mainVideo = document.getElementById("mainVideo");
       mainVideo.currentTime = 0;
       mainVideo.pause();
-      mainVideo.controls = true; // 恢复显示控件
+      mainVideo.controls = true;
 
       const preview = document.getElementById("previewVideo");
       if(preview.src) {
@@ -985,30 +948,28 @@
         URL.revokeObjectURL(finalObjectURL);
         finalObjectURL = '';
       }
-      finalFilename = '';
-
+      
       document.getElementById("video-container").scrollIntoView({behavior: "smooth"});
       const overlay = document.getElementById('recordOverlay');
       if (overlay) overlay.style.display = 'none';
     }
 
-    // 核心录制逻辑
-    function getBestMimeType() {
+    // --- 核心修复：专门针对 Chrome 的 MIME 选择 ---
+    function getChromeOptimizedMimeType() {
+      // 优先级：WebM VP9 -> WebM VP8 -> WebM Generic
+      // 绝对不使用 MP4，因为在 Chrome MediaRecorder 中 MP4 极其不稳定
       const types = [
-        "video/mp4;codecs=avc1",
-        "video/mp4;codecs=hvc1",
-        "video/mp4",
-        "video/webm;codes=vp9",
-        "video/webm;codes=vp8"
+        "video/webm;codecs=vp9,opus",
+        "video/webm;codecs=vp8,opus",
+        "video/webm"
       ];
+
       for (const type of types) {
-        if (MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
-          console.log("Using MIME type:", type);
+        if (MediaRecorder.isTypeSupported(type)) {
           return type;
         }
       }
-      console.log("Using default/fallback MIME type (likely MP4 for Safari)");
-      return 'video/mp4';
+      return "";
     }
 
     function toggleRecording() {
@@ -1029,7 +990,6 @@
       const permissionGranted = await checkMicPermissionAndResumeAudio();
       if (!permissionGranted) return;
 
-      // 1. 立即隐藏控件，防止出现播放按钮
       video.controls = false;
 
       const overlay = document.getElementById('countdown-overlay');
@@ -1065,8 +1025,6 @@
       const docElm = document.documentElement;
       if (docElm.requestFullscreen) {
         docElm.requestFullscreen().catch(()=>{});
-      } else if (docElm.mozRequestFullScreen) {
-        docElm.mozRequestFullScreen().catch(()=>{});
       } else if (docElm.webkitRequestFullScreen) {
         docElm.webkitRequestFullScreen().catch(()=>{});
       }
@@ -1076,8 +1034,6 @@
       document.body.classList.remove('recording-mode');
       if (document.exitFullscreen) {
         document.exitFullscreen().catch(()=>{});
-      } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen().catch(()=>{});
       } else if (document.webkitCancelFullScreen) {
         document.webkitCancelFullScreen().catch(()=>{});
       }
@@ -1090,38 +1046,31 @@
       const status = document.getElementById("statusText");
       const actionBtn = document.getElementById("actionBtn");
 
-      // 再次确认隐藏控件
       video.controls = false;
 
       if (audioCtx.state === 'suspended') {
         await audioCtx.resume();
       }
 
-      // 画面抓取设置
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
       try {
-        canvasStream = canvas.captureStream(25);
+        // 使用 30fps，Chrome 下通常表现良好
+        canvasStream = canvas.captureStream(30);
       } catch(e) {
-        console.error("Canvas captureStream failed:", e);
-        alert("画面捕获失败：浏览器不支持Canvas流捕获。请尝试更新浏览器。");
+        alert("浏览器不支持 Canvas 流捕获，请尝试更新 Chrome。");
         return;
       }
 
       const canvasVideoTrack = canvasStream.getVideoTracks()[0];
-      if (!canvasVideoTrack) {
-        alert("未能获取视频轨道，请重试。");
-        return;
-      }
-
-      // 混合音频轨道
+      
+      // 音频混合逻辑
       dest = audioCtx.createMediaStreamDestination();
       micGainNode = audioCtx.createGain();
       videoGainNode = audioCtx.createGain();
       
-      // 初始化时先静音，防止 Intro 期间有噪音
-      micGainNode.gain.value = 0; 
+      micGainNode.gain.value = 0; // Intro 期间静音
       videoGainNode.gain.value = 0;
 
       if (micStream && micStream.getAudioTracks().length > 0) {
@@ -1137,9 +1086,9 @@
         sourceVideo = video._elementAudioSource;
         sourceVideo.connect(videoGainNode);
         videoGainNode.connect(dest);
-        dest.connect(audioCtx.destination);
+        dest.connect(audioCtx.destination); // 必须连接到 destination 才能听到声音
       } catch (e) {
-        console.warn("MediaElementAudioSourceNode fallback logic", e);
+        console.warn("MediaElementAudioSource fallback logic", e);
       }
 
       const mixedAudioTrack = dest.stream.getAudioTracks()[0];
@@ -1147,37 +1096,34 @@
       if (mixedAudioTrack) {
         combinedStream = new MediaStream([canvasVideoTrack, mixedAudioTrack]);
       } else {
-        // Fallback
         const micTrack = micStream && micStream.getAudioTracks().length > 0 ? micStream.getAudioTracks()[0] : null;
         if (micTrack) combinedStream = new MediaStream([canvasVideoTrack, micTrack]);
       }
 
-      recordedMimeType = getBestMimeType();
+      // --- 关键修改：强制使用 Chrome 友好的 MIME 类型 ---
+      recordedMimeType = getChromeOptimizedMimeType();
+      console.log("Using MIME:", recordedMimeType);
+
       try {
-        mediaRecorder = recordedMimeType
-          ? new MediaRecorder(combinedStream, { mimeType: recordedMimeType, videoBitsPerSecond: 2000000 })
-          : new MediaRecorder(combinedStream, { videoBitsPerSecond: 2000000 });
+        // Chrome 在高码率下表现更好，避免模糊
+        mediaRecorder = new MediaRecorder(combinedStream, { 
+            mimeType: recordedMimeType, 
+            videoBitsPerSecond: 3000000 
+        });
       } catch (e) {
-        alert("MediaRecorder初始化失败，请更换浏览器。");
+        alert("无法初始化录制器，可能是设备不支持 WebM 格式。");
         return;
       }
 
       recordedChunks = [];
       mediaRecorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) {
-          recordedChunks.push(e.data);
-          console.log("录制数据块大小:", e.data.size, "bytes");
-        }
+        if (e.data && e.data.size > 0) recordedChunks.push(e.data);
       };
 
       mediaRecorder.onerror = (e) => console.error("MediaRecorder error:", e);
+      
+      // 关键：在 Stop 时触发生成逻辑
       mediaRecorder.onstop = () => {
-        console.log("MediaRecorder stopped, recordedChunks length:", recordedChunks.length);
-        if (recordedChunks.length === 0) {
-          alert("录制失败：数据为空。");
-          resetRecording();
-          return;
-        }
         finishProcessingOverlayThen(() => generateVideoAndShowResult());
       };
 
@@ -1190,57 +1136,46 @@
       const pauseBtn = document.getElementById('pauseToggleBtn');
       if (pauseBtn) pauseBtn.textContent = '暂停';
 
-      // --- 修改逻辑：持续绘制 Intro 避免录制中断 ---
+      // Intro + 录制逻辑
       introImageObj = new Image();
       introImageObj.crossOrigin = "anonymous";
       introImageObj.src = "intro.png";
 
       const startRecorderAndDraw = () => {
-          // 启动录制器
+          // --- 关键修改：不要使用 timeslice，让 Chrome 自行处理 Block 结构 ---
+          // 使用 chunks 模式虽然内存小，但 Chrome 经常在 timeslice 下写坏 Header 导致时长为 0
+          // 不传参数，ondataavailable 仅在 stop 时触发一次，对于短视频更安全。
           try {
-              mediaRecorder.start(500); // 500ms间隔收集数据
+              mediaRecorder.start(); 
           } catch(e) {
               alert("录制启动失败"); return;
           }
 
-          // 标记为开始，进入绘图循环
           isRecording = true;
-          // 启动 Intro 模式
           isIntroMode = true;
           status.innerText = "🎬 Intro 播放中...";
           status.style.color = "var(--pear-yellow)";
 
-          // 开始绘制循环（此时绘制 Intro）
           drawToCanvas(video, ctx, canvas);
 
-          // 3秒后切换到视频内容
           setTimeout(() => {
-              isIntroMode = false; // 切换绘制模式
+              isIntroMode = false;
               
-              // 恢复音量
               micGainNode.gain.value = 1.5;
               videoGainNode.gain.value = 1.2;
               
-              // 播放视频
               video.currentTime = 0;
               video.volume = 1.0;
-              // 再次确保不显示控件
               video.controls = false; 
               
               video.play().then(() => {
                  status.innerText = "🔴 录制中 (Recording)...";
                  status.style.color = "#FF0000";
-                 
-                 // 添加视频结束监听
-                 video.onended = () => {
-                   console.log("视频播放结束，停止录制");
-                   stopRecording();
-                 };
               }).catch((e) => {
                  console.error("Play failed:", e);
-                 alert("自动播放失败，请点击屏幕。");
-                 stopRecording();
               });
+              
+              video.onended = stopRecording;
           }, 3000);
       };
 
@@ -1249,46 +1184,32 @@
       };
 
       introImageObj.onerror = () => {
-          // 图片加载失败，跳过 Intro 模式
-          console.warn("intro.png not found, skipping intro.");
           isIntroMode = false;
-          startRecorderAndDraw(); // 逻辑里会立刻被 setTimeout 覆盖，但没关系，至少能跑
+          startRecorderAndDraw(); 
       };
     }
 
-    // Canvas 绘制函数（修改版）
     function drawToCanvas(video, ctx, canvas) {
       if (!isRecording) {
-        if (animationFrameId) {
-          cancelAnimationFrame(animationFrameId);
-          animationFrameId = null;
-        }
+        cancelAnimationFrame(animationFrameId);
         return;
       }
       
       try {
         if (isIntroMode) {
-            // Intro 模式：绘制图片（保持黑底）
             ctx.fillStyle = "#000";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            if (introImageObj && introImageObj.complete) {
+            if (introImageObj) {
                 ctx.drawImage(introImageObj, 0, 0, canvas.width, canvas.height);
             }
         } else {
-            // 视频模式：绘制视频
             if (video.readyState >= 2 && !video.ended) {
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            } else if (video.ended) {
-                // 视频结束，停止绘制
-                isRecording = false;
-                return;
             }
         }
       } catch (e) {
-        console.error("Canvas Draw Error:", e);
         isRecording = false;
         exitFullscreenMode();
-        alert("录制中断：视频跨域限制(CORS)。");
         stopRecording();
         return;
       }
@@ -1297,86 +1218,51 @@
     }
 
     function stopRecording() {
-      if (!isRecording) return;
-      
-      console.log("stopRecording called");
+      if (!mediaRecorder || mediaRecorder.state === "inactive") return;
+
       isRecording = false;
-      isIntroMode = false; // 重置
-      
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-      }
-      
+      isIntroMode = false;
+      cancelAnimationFrame(animationFrameId);
       exitFullscreenMode();
 
       const video = document.getElementById("mainVideo");
       const actionBtn = document.getElementById("actionBtn");
-      
-      // 暂停视频
-      if (video) video.pause();
-      
-      // 恢复控件
-      if (video) video.controls = true;
+      video.pause();
+      video.controls = true;
 
-      // 隐藏右上角覆盖层
       const overlay = document.getElementById('recordOverlay');
       if (overlay) overlay.style.display = 'none';
 
       actionBtn.disabled = true;
       beginProcessingOverlay();
 
-      // 停止 MediaRecorder
-      if (mediaRecorder && mediaRecorder.state === "recording") {
-        try { 
-          mediaRecorder.stop(); 
-          console.log("MediaRecorder stopped");
-        } catch(e) { 
-          console.warn("mediaRecorder.stop error:", e);
-        }
-      } else {
-        // 如果 MediaRecorder 不在录制状态，手动触发处理
-        setTimeout(() => {
-          if (recordedChunks.length > 0) {
-            finishProcessingOverlayThen(() => generateVideoAndShowResult());
-          } else {
-            alert("录制失败：没有录制到数据。");
-            resetRecording();
+      // 延迟一点停止 Recorder 以确保尾部数据被捕获
+      setTimeout(() => {
+          try { mediaRecorder.stop(); } catch(e) { console.warn("mediaRecorder.stop error:", e); }
+          
+          // 清理流
+          if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
           }
-        }, 100);
-      }
-
-      // 清理回退流
-      if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
-        videoStream = null;
-      }
-
-      if (canvasStream) {
-        canvasStream.getTracks().forEach(track => track.stop());
-        canvasStream = null;
-      }
-
-      if (audioCtx) {
-        if(sourceMic) { try { sourceMic.disconnect(); } catch(e){} }
-        if(sourceVideo) { try { sourceVideo.disconnect(); } catch(e){} }
-        if(micGainNode) { try { micGainNode.disconnect(); } catch(e){} }
-        if(videoGainNode) { try { videoGainNode.disconnect(); } catch(e){} }
-        if(dest) { try { dest.disconnect(); } catch(e){} }
-      }
-      sourceMic = null;
-      sourceVideo = null;
-      micGainNode = null;
-      videoGainNode = null;
-      dest = null;
+          if (canvasStream) {
+            canvasStream.getTracks().forEach(track => track.stop());
+            canvasStream = null;
+          }
+          // 关闭音频连接
+          if(sourceMic) { try { sourceMic.disconnect(); } catch(e){} }
+          if(sourceVideo) { try { sourceVideo.disconnect(); } catch(e){} }
+          if(micGainNode) { try { micGainNode.disconnect(); } catch(e){} }
+          if(videoGainNode) { try { videoGainNode.disconnect(); } catch(e){} }
+          if(dest) { try { dest.disconnect(); } catch(e){} }
+      }, 200);
 
       actionBtn.innerHTML = "🎙️ 准备就绪，开始配音";
       actionBtn.className = "btn btn-record";
-      document.getElementById("statusText").innerText = "✨ 视频生成中，请稍候...";
+      document.getElementById("statusText").innerText = "✨ 视频生成中...";
       document.getElementById("statusText").style.color = "var(--pear-yellow)";
     }
 
-    // 合成进度 & 结果展示
     function beginProcessingOverlay() {
       const overlay = document.getElementById('processing-overlay');
       const bar = document.getElementById('progressBar');
@@ -1417,47 +1303,41 @@
       }, 30);
     }
 
-    // 生成结果
     function generateVideoAndShowResult() {
       if(recordedChunks.length === 0) {
-        alert("录制失败：数据为空。可能是Canvas捕获失败或麦克风未授权。");
-        document.getElementById("statusText").innerText = "❌ 生成失败，请重试";
-        document.getElementById("statusText").style.color = "var(--rabbit-red)";
+        alert("录制数据为空，请重试。");
         return;
       }
 
       try {
-        const type = recordedMimeType || 'video/mp4';
+        // --- 核心修复：强制声明 Blob 为 WebM ---
+        // Chrome 录制的原生数据是 WebM，如果强行存为 MP4 就会出现"一直在加载"或"只有1秒"
+        const type = recordedMimeType || 'video/webm'; 
         finalBlob = new Blob(recordedChunks, { type });
         finalObjectURL = URL.createObjectURL(finalBlob);
-        
-        console.log("生成的Blob大小:", finalBlob.size, "bytes");
-        console.log("生成的Blob类型:", finalBlob.type);
 
         const preview = document.getElementById("previewVideo");
         preview.src = finalObjectURL;
         preview.muted = false;
         preview.volume = 1.0;
-        
-        // 监听视频元数据加载
-        preview.onloadedmetadata = function() {
-          console.log("生成的视频时长:", preview.duration, "秒");
-        };
 
         const downloadBtn = document.getElementById("downloadLink");
-        const lowerType = type.toLowerCase();
-        let ext = '.mp4';
-        if (lowerType.includes('webm')) ext = '.webm';
-        finalFilename = `Firstleap_Voice_${Date.now()}${ext}`;
+        
+        // --- 核心修复：文件名后缀强制 .webm ---
+        // 这是解决 Chrome 下载后无法播放的最关键一步
+        finalFilename = `Firstleap_Voice_${Date.now()}.webm`;
 
-        // 环境按钮配置
-        setupSaveButton(downloadBtn);
+        downloadBtn.textContent = "💾 下载视频 (Download)";
+        downloadBtn.href = finalObjectURL;
+        downloadBtn.download = finalFilename;
+        downloadBtn.target = "_blank";
+        
+        // 移除所有 Safari/iOS 特有的分享逻辑，保持 Chrome 的纯净下载体验
+        downloadBtn.onclick = null;
 
         document.getElementById("actionBtn").style.display = "none";
-
         const resultArea = document.getElementById("resultArea");
         resultArea.style.display = "block";
-
         document.getElementById("waitingHint").style.display = "block";
         document.getElementById("downloadLink").style.display = "none";
 
@@ -1468,99 +1348,14 @@
         setTimeout(() => {
           document.getElementById("waitingHint").style.display = "none";
           document.getElementById("downloadLink").style.display = "flex";
-        }, 2000);
+        }, 1500);
 
       } catch(e) {
         console.error(e);
         alert("视频生成出错，请重试");
-        document.getElementById("statusText").innerText = "❌ 生成失败，请重试";
-        document.getElementById("statusText").style.color = "var(--rabbit-red)";
       }
     }
 
-    // 保存按钮
-    function setupSaveButton(downloadBtn) {
-      const tip = document.getElementById('saveTipText');
-      downloadBtn.removeAttribute('href');
-      downloadBtn.removeAttribute('download');
-      downloadBtn.onclick = null;
-
-      if (isWeChat) {
-        downloadBtn.textContent = "💾 保存视频到手机相册 (Save)";
-        downloadBtn.onclick = function(e) {
-          e.preventDefault();
-          openWeChatSavePage();
-        };
-        tip.innerHTML = '* 在微信中，请点击上方的 "保存视频" 按钮获取保存指引。';
-        return;
-      }
-
-      if ((isIOS || isSafari) && supportsFileShare) {
-        downloadBtn.textContent = "💾 保存/分享视频";
-        downloadBtn.onclick = async function(e) {
-          e.preventDefault();
-          await saveVideoViaShare();
-        };
-        tip.innerHTML = '* iOS Safari：点击下方"保存/分享视频"，在系统分享面板中选择"存储视频"保存到相册。';
-        return;
-      }
-
-      downloadBtn.textContent = "💾 下载视频 (Download)";
-      downloadBtn.href = finalObjectURL;
-      downloadBtn.download = finalFilename;
-      downloadBtn.target = "_blank";
-    }
-
-    // Web Share
-    async function saveVideoViaShare() {
-      if (!finalBlob) {
-        alert("暂未生成可保存的视频，请先完成配音。");
-        return;
-      }
-      try {
-        const file = new File([finalBlob], finalFilename || 'Firstleap_Voice.mp4', { type: finalBlob.type || 'video/mp4' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: 'Firstleap Voice Magic', text: '配音秀' });
-        } else {
-          openWeChatSavePage();
-        }
-      } catch (err) {
-        if (err && err.name !== 'AbortError') {
-          console.warn('Share failed:', err);
-          alert("分享失败。您也可以尝试在浏览器菜单中选择"分享/保存"，或更换为系统浏览器再试。");
-        }
-      }
-    }
-
-    function openWeChatSavePage() {
-      if (!finalObjectURL) {
-        alert("暂未生成可保存的视频，请先完成配音。");
-        return;
-      }
-      const w = window.open(finalObjectURL, '_blank');
-      if (w) { w.focus(); return; }
-      const hintVideo = document.getElementById('wxHintVideo');
-      const hintOverlay = document.getElementById('wxHintOverlay');
-      if(isSafari) {
-        document.getElementById('saveHintTitle').textContent = '无法自动保存：请手动操作';
-        document.getElementById('saveHintText').innerHTML = 'Safari 浏览器可能不支持直接下载。请 <b>点击下方"播放"后，长按视频</b>，在弹出菜单中选择 <b>"存储视频"</b> 保存到相册。';
-      } else if (isWeChat) {
-        document.getElementById('saveHintTitle').textContent = '在微信中保存视频';
-        document.getElementById('saveHintText').innerHTML = '方式一：长按下方视频，选择"保存到手机"<br>方式二：点右上角"...",选择"在浏览器中打开"，再保存';
-      }
-
-      hintVideo.src = finalObjectURL;
-      hintOverlay.style.display = 'flex';
-    }
-
-    function closeWxHint() {
-      const hint = document.getElementById('wxHintOverlay');
-      const v = document.getElementById('wxHintVideo');
-      v.pause();
-      hint.style.display = 'none';
-    }
-
-    // 右上角暂停按钮
     function togglePauseDuringRecording() {
       const video = document.getElementById("mainVideo");
       const btn = document.getElementById("pauseToggleBtn");
@@ -1575,67 +1370,35 @@
       }
     }
 
-    // 初始化
-    document.addEventListener('DOMContentLoaded', () => {
-      const downloadBtn = document.getElementById('downloadLink');
-      if ((isIOS || isSafari) && supportsFileShare) {
-        downloadBtn.textContent = "💾 保存/分享视频";
-        document.getElementById('saveTipText').innerHTML = '* iOS Safari：点击下方"保存/分享视频"，在系统分享面板中选择"存储视频"保存到相册。';
-      } else if (isWeChat) {
-        downloadBtn.textContent = "💾 保存视频到手机相册 (Save)";
-        document.getElementById('saveTipText').innerHTML = '* 在微信中，请点击上方的 "保存视频" 按钮获取保存指引。';
-      } else {
-        downloadBtn.textContent = "💾 下载视频 (Download)";
-        document.getElementById('saveTipText').innerHTML = '* 若浏览器未自动下载，请右键/长按保存或在浏览器菜单中选择"下载"。';
-      }
-
-      const overlay = document.getElementById('recordOverlay');
-      if (overlay) overlay.style.display = 'none';
-    });
-
-    /* --- 彩蛋逻辑开始 --- */
+    /* --- 彩蛋逻辑 --- */
     let titleClickCount = 0;
     let titleClickTimer = null;
 
     function initEasterEgg() {
-      // 获取标题元素（h1）
       const titleElement = document.querySelector('h1');
-      
       if (!titleElement) return;
 
-      // 监听点击事件
       titleElement.addEventListener('click', function() {
         titleClickCount++;
-
-        // 如果是第一次点击，启动一个计时器
-        // 如果2秒内没有点够3次，就重置计数
         if (titleClickCount === 1) {
           titleClickTimer = setTimeout(() => {
             titleClickCount = 0;
-          }, 2000); // 2秒时间窗口
+          }, 2000);
         }
-
-        // 如果点到了3次
         if (titleClickCount === 3) {
           showEggOverlay();
-          // 重置计数和计时器
           titleClickCount = 0;
           clearTimeout(titleClickTimer);
         }
       });
-      
-      // 把鼠标变成手型，提示可以点击（可选）
       titleElement.style.cursor = "pointer";
-      // 禁止双击选中文字，提升体验
       titleElement.style.userSelect = "none"; 
-      titleElement.style.webkitUserSelect = "none";
     }
 
     function showEggOverlay() {
       const egg = document.getElementById('eggOverlay');
       if(egg) {
         egg.style.display = 'flex';
-        // 播放一点简单的音效（利用现有的 AudioContext）
         playEggSound();
       }
     }
@@ -1645,36 +1408,25 @@
       if(egg) egg.style.display = 'none';
     }
 
-    // 简单的"叮"声效
     function playEggSound() {
       try {
         initializeAudioContext();
         if(audioCtx.state === 'suspended') audioCtx.resume();
-        
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        
         osc.type = 'sine';
-        // 频率从 400Hz 滑向 800Hz，听起来像"Ding!"
         osc.frequency.setValueAtTime(400, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
-        
         gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-        
         osc.connect(gain);
         gain.connect(audioCtx.destination);
-        
         osc.start();
         osc.stop(audioCtx.currentTime + 0.5);
-      } catch(e) {
-        console.log("Sound play failed", e);
-      }
+      } catch(e) {}
     }
 
-    // 页面加载完成后初始化彩蛋
     document.addEventListener('DOMContentLoaded', initEasterEgg);
-    /* --- 彩蛋逻辑结束 --- */
 
   </script>
 </body>
