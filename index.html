@@ -1146,13 +1146,14 @@
     }
 
     // 保存按钮逻辑
+    // 保存按钮逻辑
     function setupSaveButton(downloadBtn) {
       const tip = document.getElementById('saveTipText');
       downloadBtn.removeAttribute('href');
       downloadBtn.removeAttribute('download');
       downloadBtn.onclick = null;
 
-      // 1. 微信环境
+      // 1. 微信环境 (保持不变)
       if (isWeChat) {
         downloadBtn.textContent = "💾 保存视频到手机相册 (Save)";
         downloadBtn.onclick = function(e) {
@@ -1163,7 +1164,7 @@
         return;
       }
 
-      // 2. iOS/Safari 环境 (使用系统分享，比MP4Box更稳)
+      // 2. iOS/Safari 环境 (保持不变 - iOS通过分享面板保存体验最好)
       if ((isIOS || isSafari) && supportsFileShare) {
         downloadBtn.textContent = "💾 保存/分享视频";
         downloadBtn.onclick = async function(e) {
@@ -1174,17 +1175,26 @@
         return;
       }
 
-      // 3. PC/Android 桌面环境 (引入 MP4Box 优化)
+      // 3. PC 和 Android 环境 (关键修改)
       downloadBtn.textContent = "💾 下载视频 (Download)";
       
-      // 如果是 MP4 格式且在 PC 端，优先尝试 MP4Box 封装
-      if (isDesktop && finalFilename.endsWith('.mp4')) {
+      // 修改点：去掉了 isDesktop 的限制
+      // 只要是 MP4 格式 (Android Chrome通常也是MP4)，就强制使用 MP4Box 进行修复
+      // 这能解决安卓播放器显示时长为 1秒 的问题
+      if (finalFilename.endsWith('.mp4')) {
           downloadBtn.onclick = async function(e) {
               e.preventDefault();
+              
+              // 提示用户正在处理，因为手机CPU比电脑慢，MP4Box可能需要几秒钟
+              const originalText = downloadBtn.textContent;
+              downloadBtn.textContent = "⚙️ 正在优化视频文件..."; 
+              
               // 尝试使用 MP4Box 封装并下载
               const success = await saveVideoViaMp4Box(finalBlob, finalFilename);
-              // 如果 MP4Box 失败或库未加载，降级为普通下载
+              
+              // 如果 MP4Box 失败 (比如手机内存不足)，降级为普通下载
               if (!success) {
+                  downloadBtn.textContent = originalText; // 恢复文字
                   const a = document.createElement('a');
                   a.href = finalObjectURL;
                   a.download = finalFilename;
@@ -1193,9 +1203,10 @@
                   document.body.removeChild(a);
               }
           };
-          tip.innerHTML = '* 已启用智能封装优化，确保视频兼容性。';
+          // 更新提示文案
+          tip.innerHTML = '* Android/PC：已启用智能修复，确保视频时长显示正常。';
       } else {
-          // 普通下载 (Android Chrome 或 WebM 格式)
+          // WebM 格式或其他情况 (降级处理)
           downloadBtn.href = finalObjectURL;
           downloadBtn.download = finalFilename;
           downloadBtn.target = "_blank";
