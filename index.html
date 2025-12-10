@@ -224,17 +224,45 @@
     }
     body.clean-mode video {
         border: none; box-shadow: none; border-radius: 0;
-        max-height: 100vh; width: 100%;
+        max-height: 100vh; width: 100%; height: 100%;
     }
     /* 强制隐藏视频原生控件 */
     body.clean-mode video::-webkit-media-controls { display: none !important; }
 
     /* Intro 图片层 */
     #introLayer {
-        position: absolute; inset: 0; background: #000; z-index: 50;
+        position: fixed; inset: 0; background: #000; z-index: 50;
         display: none; align-items: center; justify-content: center;
     }
-    #introLayer img { width: 100%; height: 100%; object-fit: contain; }
+    /* 修改：强制图片不裁剪，完整显示 */
+    #introLayer img { 
+        width: 100%; height: 100%; 
+        object-fit: contain; 
+        max-width: 100vw; max-height: 100vh;
+    }
+
+    /* 悬浮控制按钮（仅在纯净模式显示） */
+    #cleanControls {
+        position: fixed;
+        top: 20px; right: 20px;
+        z-index: 60; /* 比Intro层高，但Intro显示时我们会手动隐藏这个div */
+        display: none; /* 默认隐藏，JS控制在clean mode下且Intro结束后显示 */
+        gap: 15px;
+    }
+    .float-btn {
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: #fff;
+        width: 44px; height: 44px;
+        border-radius: 50%;
+        font-size: 20px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .float-btn:active { transform: scale(0.9); background: rgba(0,0,0,0.6); }
+    .float-btn-exit { background: rgba(238, 82, 83, 0.5); } 
 
     /* 弹窗通用样式 */
     .overlay-fullscreen {
@@ -263,6 +291,9 @@
 </head>
 <body class="welcome-active">
 
+  <!-- 预加载 Intro 图片 (隐藏) -->
+  <img src="intro.png" style="display:none;" id="preloadIntro">
+
   <!-- 欢迎页 -->
   <div id="welcome" class="welcome-screen">
     <video id="welcomeVideo" class="welcome-bgvideo" muted autoplay playsinline loop>
@@ -284,7 +315,7 @@
       <h2 style="margin:0 0 10px 0;">准备录制</h2>
       <div class="guide-step">
         1. 请下拉手机控制中心，开启 <span class="highlight">屏幕录制</span>。<br>
-        <span style="font-size:13px; color:#666;">(⚠️ 安卓用户请确保录屏设置为“录制麦克风声音”或“系统声音”)</span><br><br>
+        <span style="font-size:13px; color:#666;">(⚠️ 请确保录屏设置为“录制麦克风声音”以及“系统声音”)</span><br><br>
         2. 开启录屏后，点击下方的 <b>GO</b> 按钮。<br><br>
         3. 视频将全屏播放，请开始您的配音表演！
       </div>
@@ -315,6 +346,12 @@
     <button class="btn btn-primary" onclick="document.getElementById('eggOverlay').style.display='none'" style="width: 200px;">收下奖励</button>
   </div>
 
+  <!-- 纯净模式悬浮控制 -->
+  <div id="cleanControls">
+    <div class="float-btn" id="cleanPauseBtn" onclick="toggleCleanPause()">⏸️</div>
+    <div class="float-btn float-btn-exit" onclick="exitCleanMode(false)">🚪</div>
+  </div>
+
   <!-- 主容器 -->
   <div class="container">
     <h1>Firstleap Voice Magic<br><span style="font-size:18px; color:#888; font-weight:normal;">配音秀</span></h1>
@@ -334,7 +371,7 @@
     <!-- 视频播放区 -->
     <div id="video-container">
       <!-- Intro 覆盖层 -->
-      <div id="introLayer"><img src="intro.png" alt="Intro"></div>
+      <div id="introLayer"><img src="intro.png" alt="Intro" id="introImgElement"></div>
       
       <video id="mainVideo"
              playsinline
@@ -481,6 +518,10 @@
       const welcome = document.getElementById('welcome');
       const wVideo = document.getElementById('welcomeVideo');
       const enterBtn = document.getElementById('welcomeEnterBtn');
+      
+      // 预加载 intro 图片
+      const preloadImg = new Image();
+      preloadImg.src = 'intro.png';
 
       enterBtn.addEventListener('click', () => {
         welcome.classList.add('hidden');
@@ -596,6 +637,7 @@
       
       const video = document.getElementById("mainVideo");
       const intro = document.getElementById("introLayer");
+      const controls = document.getElementById("cleanControls");
       
       // 尝试进入浏览器原生全屏
       const docElm = document.documentElement;
@@ -614,18 +656,29 @@
       // 强制隐藏控件，防止录屏时出现
       video.controls = false;
       
+      // 确保悬浮控件先隐藏（不要挡住intro）
+      controls.style.display = "none";
+      // 重置暂停按钮图标
+      document.getElementById("cleanPauseBtn").innerText = "⏸️";
+      
       // 显示 Intro 图片 1.5秒
       intro.style.display = "flex";
       
-      setTimeout(() => {
-        intro.style.display = "none";
-        // 开始播放视频
-        video.play().then(() => {
-          // 视频播放成功
-        }).catch(err => {
-          alert("自动播放被阻止，请点击屏幕开始");
-        });
-      }, 1500); // 改为 1.5秒
+      // 使用 requestAnimationFrame 确保图片渲染后再开始倒计时
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          intro.style.display = "none";
+          // 显示悬浮控制
+          controls.style.display = "flex";
+          
+          // 开始播放视频
+          video.play().then(() => {
+            // 视频播放成功
+          }).catch(err => {
+            alert("自动播放被阻止，请点击屏幕开始");
+          });
+        }, 1500);
+      });
       
       // 视频播放结束后退出
       video.onended = () => {
@@ -633,15 +686,29 @@
       };
     }
 
+    // 悬浮按钮功能：暂停/继续
+    function toggleCleanPause() {
+        const video = document.getElementById("mainVideo");
+        const btn = document.getElementById("cleanPauseBtn");
+        if(video.paused) {
+            video.play();
+            btn.innerText = "⏸️";
+        } else {
+            video.pause();
+            btn.innerText = "▶️";
+        }
+    }
+
     // 3. 退出录屏模式
     function exitCleanMode(finished = false) {
       document.body.classList.remove('clean-mode');
+      document.getElementById("cleanControls").style.display = "none"; // 隐藏悬浮按钮
       
       // 退出原生全屏
       if (document.exitFullscreen) { document.exitFullscreen().catch(()=>{}); }
       else if (document.webkitCancelFullScreen) { document.webkitCancelFullScreen().catch(()=>{}); }
       
-      // 解锁屏幕方向 (如果之前锁定了)
+      // 解锁屏幕方向
       try {
          if (screen.orientation && screen.orientation.unlock) {
             screen.orientation.unlock();
@@ -652,7 +719,7 @@
       video.pause();
       video.currentTime = 0;
       video.controls = true; // 恢复控件显示
-      // 恢复结束监听为默认（防止下次预览时触发弹窗）
+      // 恢复结束监听为默认
       video.onended = function() {
         document.getElementById("playBtn").innerHTML = "▶️ 预览视频 Preview";
       };
