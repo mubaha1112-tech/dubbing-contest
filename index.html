@@ -168,6 +168,16 @@
     }
     .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.1); }
     .btn-primary { background: linear-gradient(135deg, #a8e063 0%, #56ab2f 100%); }
+    
+    /* 禁用状态样式 */
+    .btn:disabled, .btn[disabled] {
+      background: #cccccc;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+      color: #888;
+    }
+
     .btn-play {
       background: linear-gradient(135deg, #fce38a 0%, #f38181 100%);
       display: none; margin-bottom: 10px; color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
@@ -312,11 +322,14 @@
       <h2 style="margin:0 0 10px 0;">准备录制</h2>
       <div class="guide-step">
         1. 请下拉手机控制中心，开启 <span class="highlight">屏幕录制</span>。<br>
-        ⚠️ 请确保<span class="highlight">"麦克风声音"</span>以及<span class="highlight">"系统声音"</span>打开<br><br>
+        <span style="font-size:13px; color:#666;">(⚠️ 安卓用户请确保录屏设置为“录制麦克风声音”或“系统声音”)</span><br><br>
         2. 开启录屏后，点击下方的 <b>GO</b> 按钮。<br><br>
         3. 视频将全屏播放，请开始您的配音表演！
       </div>
-      <button class="btn btn-primary" onclick="startCleanModeReal()">🚀 GO! 开始播放</button>
+      
+      <!-- 这里增加了ID，并设置默认为disabled -->
+      <button id="realStartBtn" class="btn btn-primary" onclick="startCleanModeReal()" disabled>⏳ 正在加载片头...</button>
+      
       <button class="btn" style="background:#eee; color:#666; box-shadow:none; margin-top:10px;" onclick="closeGuide()">取消</button>
     </div>
   </div>
@@ -396,10 +409,35 @@
   </div>
 
   <script>
-    // --- 强制预加载 Intro 图片 ---
-    // 这会在脚本执行之初就开始下载图片，确保家长阅读弹窗时图片已就绪
+    // --- 图片预加载与按钮状态控制 ---
     const preloadIntroImage = new Image();
+    const realStartBtn = document.getElementById('realStartBtn');
+
+    // 激活按钮的函数
+    function enableStartButton() {
+      if(realStartBtn) {
+        realStartBtn.disabled = false;
+        realStartBtn.innerText = "🚀 GO! 开始播放";
+      }
+    }
+
+    preloadIntroImage.onload = function() {
+      console.log("Intro image loaded successfully.");
+      enableStartButton();
+    };
+
+    // 如果图片加载失败，也要允许用户进入，避免卡死，但可以给出控制台警告
+    preloadIntroImage.onerror = function() {
+      console.warn("Intro image failed to load, enabling button anyway.");
+      enableStartButton(); 
+    };
+
     preloadIntroImage.src = 'intro.png';
+
+    // 如果图片已缓存，立即激活
+    if(preloadIntroImage.complete) {
+      enableStartButton();
+    }
 
     // --- 数据配置 ---
     const videoDatabase = {
