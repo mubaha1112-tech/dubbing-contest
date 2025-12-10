@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>励步 - Firstleap Voice Magic</title>
   
-  <!-- 核心优化：预加载图片，提升加载优先级 -->
   <link rel="preload" href="intro.png" as="image">
 
   <style>
@@ -172,24 +171,10 @@
     }
     .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.1); }
     .btn-primary { background: linear-gradient(135deg, #a8e063 0%, #56ab2f 100%); }
-    
-    /* 禁用状态样式 */
-    .btn:disabled, .btn[disabled] {
-      background: #cccccc;
-      cursor: not-allowed;
-      transform: none !important;
-      box-shadow: none !important;
-      color: #888;
-    }
+    .btn:disabled, .btn[disabled] { background: #cccccc; cursor: not-allowed; transform: none !important; box-shadow: none !important; color: #888; }
 
-    .btn-play {
-      background: linear-gradient(135deg, #fce38a 0%, #f38181 100%);
-      display: none; margin-bottom: 10px; color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
-    }
-    .btn-record-mode { 
-      background: linear-gradient(to right, #ff5f6d, #ffc371); 
-      display: none; 
-    }
+    .btn-play { background: linear-gradient(135deg, #fce38a 0%, #f38181 100%); display: none; margin-bottom: 10px; color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,0.1); }
+    .btn-record-mode { background: linear-gradient(to right, #ff5f6d, #ffc371); display: none; }
 
     /* 视频区域 */
     #video-container { margin-top: 25px; display: none; position: relative; min-height: 200px; }
@@ -209,108 +194,155 @@
       box-shadow: inset 0 0 5px rgba(0,0,0,0.05); text-align: left;
     }
 
-    /* --- 纯净录屏模式 (Clean Recording Mode) --- */
-    body.clean-mode { 
-        background: #000; overflow: hidden; padding: 0; 
-    }
+    /* --- 纯净录屏模式 --- */
+    body.clean-mode { background: #000; overflow: hidden; padding: 0; }
     body.clean-mode .container {
         max-width: 100%; height: 100vh; margin: 0; padding: 0;
         border: none; border-radius: 0; background: #000;
         display: flex; flex-direction: column; justify-content: center;
     }
-    body.clean-mode h1, 
-    body.clean-mode .step-label, 
-    body.clean-mode select, 
-    body.clean-mode #searchBtn, 
-    body.clean-mode #playBtn, 
-    body.clean-mode #actionBtn,
-    body.clean-mode .tip,
-    body.clean-mode .status-text { 
-        display: none !important; 
-    }
+    body.clean-mode h1, body.clean-mode .step-label, body.clean-mode select, 
+    body.clean-mode #searchBtn, body.clean-mode #playBtn, body.clean-mode #actionBtn,
+    body.clean-mode .tip, body.clean-mode .status-text { display: none !important; }
     
     body.clean-mode #video-container {
-        display: flex !important;
-        width: 100%; height: 100%;
-        margin: 0;
-        background: #000;
-        align-items: center; justify-content: center;
+        display: flex !important; width: 100%; height: 100%; margin: 0;
+        background: #000; align-items: center; justify-content: center;
     }
     body.clean-mode video {
         border: none; box-shadow: none; border-radius: 0;
         max-height: 100vh; width: 100%; height: 100%;
     }
-    /* 强制隐藏视频原生控件 */
     body.clean-mode video::-webkit-media-controls { display: none !important; }
 
-    /* Intro 图片层 - 优化：增加文字兜底 */
+    /* Intro 图片层 */
     #introLayer {
         position: fixed; inset: 0; background: #000; z-index: 50;
         display: none; align-items: center; justify-content: center;
-        flex-direction: column;
-        color: #fff;
+        flex-direction: column; color: #fff;
     }
-    /* 图片在加载前隐藏，加载后显示 */
     #introLayer img { 
-        width: 100%; height: 100%; 
-        object-fit: contain; 
+        width: 100%; height: 100%; object-fit: contain; 
         max-width: 100vw; max-height: 100vh;
-        position: absolute; top:0; left:0;
-        z-index: 2;
+        position: absolute; top:0; left:0; z-index: 2;
     }
-    /* 兜底文字，在图片加载慢时显示 */
-    .intro-fallback-text {
-        z-index: 1;
-        font-size: 24px;
-        font-weight: bold;
-        color: #EE5253;
-        animation: pulse 1s infinite alternate;
-    }
+    .intro-fallback-text { z-index: 1; font-size: 24px; font-weight: bold; color: #EE5253; animation: pulse 1s infinite alternate; }
 
-    /* 悬浮控制按钮（仅在纯净模式显示） */
+    /* 悬浮控制按钮 */
     #cleanControls {
-        position: fixed;
-        top: 20px; right: 20px;
-        z-index: 60; 
-        display: none; 
-        gap: 15px;
+        position: fixed; top: 20px; right: 20px; z-index: 60; 
+        display: none; gap: 15px;
     }
     .float-btn {
-        background: rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(5px);
-        border: 1px solid rgba(255,255,255,0.3);
-        color: #fff;
-        width: 44px; height: 44px;
-        border-radius: 50%;
-        font-size: 20px;
+        background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(5px);
+        border: 1px solid rgba(255,255,255,0.3); color: #fff;
+        width: 44px; height: 44px; border-radius: 50%; font-size: 20px;
         display: flex; align-items: center; justify-content: center;
-        cursor: pointer;
-        transition: all 0.2s;
+        cursor: pointer; transition: all 0.2s;
     }
     .float-btn:active { transform: scale(0.9); background: rgba(0,0,0,0.6); }
     .float-btn-exit { background: rgba(238, 82, 83, 0.5); } 
 
-    /* 弹窗通用样式 */
+    /* 弹窗通用 */
     .overlay-fullscreen {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.92);
-        z-index: 99999; display: none; align-items: center; justify-content: center; 
+        background: rgba(0, 0, 0, 0.92); z-index: 99999;
+        display: none; align-items: center; justify-content: center; 
         flex-direction: column; padding: 20px; box-sizing: border-box;
     }
     .guide-card {
         background: #fff; color: #333; padding: 30px; border-radius: 20px;
         max-width: 90%; width: 400px; text-align: center;
     }
-    .guide-step {
-        text-align: left; margin: 20px 0; font-size: 16px; line-height: 1.6;
-    }
+    .guide-step { text-align: left; margin: 20px 0; font-size: 16px; line-height: 1.6; }
     .guide-icon { font-size: 40px; margin-bottom: 10px; display: block; text-align: center; }
     .highlight { color: var(--rabbit-red); font-weight: bold; }
 
     @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
     @keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
 
-    /* 彩蛋动画 */
+    /* 
+     * ===========================
+     * 火箭发射动画 CSS
+     * ===========================
+     */
+    #rocketOverlay {
+        position: fixed; inset: 0; background: #0B0C15; z-index: 100010;
+        display: none; /* 初始隐藏 */
+        flex-direction: column; align-items: center; justify-content: center;
+        overflow: hidden;
+    }
+
+    /* 星空背景 (可选优化) */
+    .star {
+        position: absolute; background: white; border-radius: 50%;
+        animation: twinkle 1s infinite alternate;
+    }
+    @keyframes twinkle { 0% { opacity: 0.3; } 100% { opacity: 1; } }
+
+    /* 火箭容器 */
+    .rocket-wrapper {
+        position: relative;
+        display: flex; flex-direction: column; align-items: center;
+        transform-origin: bottom center;
+    }
+
+    /* 倒计时文字 */
+    .countdown-text {
+        color: #fff; font-size: 60px; font-weight: 900; margin-bottom: 50px;
+        text-shadow: 0 0 20px rgba(255,255,255,0.5);
+        font-family: monospace;
+    }
+
+    /* 火箭本体 */
+    .rocket-emoji {
+        font-size: 100px;
+        z-index: 2;
+        display: block;
+        /* 默认状态 */
+        transform: translateY(0);
+    }
+
+    /* 火焰 */
+    .rocket-fire {
+        position: absolute; bottom: -30px; width: 40px; height: 60px;
+        background: linear-gradient(to top, rgba(255,0,0,0), #ff5722, #ffeb3b);
+        border-radius: 50% 50% 20% 20%;
+        filter: blur(5px);
+        opacity: 0; /* 默认熄灭 */
+        z-index: 1;
+        transform-origin: top center;
+    }
+
+    /* 动画：准备（剧烈抖动） */
+    .anim-shake .rocket-wrapper { animation: shake 0.1s infinite; }
+    .anim-shake .rocket-fire { opacity: 0.6; height: 40px; animation: flicker 0.1s infinite; }
+
+    /* 动画：起飞 */
+    .anim-launch .rocket-wrapper {
+        animation: flyUp 1.2s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+    }
+    .anim-launch .rocket-fire {
+        opacity: 1; height: 120px; transition: height 0.3s;
+    }
+    
+    @keyframes shake {
+        0% { transform: translate(1px, 1px) rotate(0deg); }
+        25% { transform: translate(-1px, -2px) rotate(-1deg); }
+        50% { transform: translate(-2px, 0px) rotate(1deg); }
+        75% { transform: translate(2px, 1px) rotate(-1deg); }
+        100% { transform: translate(1px, -1px) rotate(0deg); }
+    }
+    
+    @keyframes flicker { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
+
+    @keyframes flyUp {
+        0% { transform: translateY(0) scale(1); }
+        20% { transform: translateY(50px) scale(0.95); } /* 向下蓄力 */
+        100% { transform: translateY(-150vh) scale(1); } /* 冲出屏幕 */
+    }
+
+    /* 弹窗彩蛋 */
     .monster-gift { font-size: 60px; animation: jumpHappy 1s infinite alternate; }
     @keyframes jumpHappy { 0% { transform: translateY(0) rotate(-10deg); } 100% { transform: translateY(-20px) rotate(10deg); } }
 
@@ -344,11 +376,25 @@
         3. 请<span class="highlight">佩戴耳机</span>配音哦，不然视频原声会重叠
       </div>
       
-      <!-- 优化：移除 disabled 属性，不让用户等待图片加载 -->
-      <button id="realStartBtn" class="btn btn-primary" onclick="startCleanModeReal()">🚀 GO! 开始配音</button>
+      <!-- 这里点击后，现在会触发动画 -->
+      <button id="realStartBtn" class="btn btn-primary" onclick="triggerRocketSequence()">🚀 GO! 开始配音</button>
       
       <button class="btn" style="background:#eee; color:#666; box-shadow:none; margin-top:10px;" onclick="closeGuide()">取消</button>
     </div>
+  </div>
+
+  <!-- 火箭动画层 -->
+  <div id="rocketOverlay">
+    <div class="countdown-text" id="countdown">Ready</div>
+    <div class="rocket-wrapper" id="rocketWrapper">
+        <div class="rocket-emoji">🚀</div>
+        <div class="rocket-fire"></div>
+    </div>
+    <!-- 简单的星星装饰 -->
+    <div class="star" style="top:10%; left:20%; width:3px; height:3px;"></div>
+    <div class="star" style="top:30%; left:80%; width:4px; height:4px; animation-delay:0.2s"></div>
+    <div class="star" style="top:60%; left:10%; width:2px; height:2px; animation-delay:0.5s"></div>
+    <div class="star" style="top:80%; left:70%; width:3px; height:3px; animation-delay:0.8s"></div>
   </div>
 
   <!-- 结束提示弹窗 -->
@@ -430,8 +476,6 @@
   </div>
 
   <script>
-    // --- 优化：非阻塞式预加载 ---
-    // 依然创建 Image 对象进行缓存，但不再控制按钮状态
     const preloadIntroImage = new Image();
     preloadIntroImage.src = 'intro.png';
 
@@ -612,7 +656,7 @@
       videoContainer.style.display = "block";
       videoPlayer.src = url;
       videoPlayer.load();
-      videoPlayer.controls = true; // 预览时显示控件
+      videoPlayer.controls = true;
       
       playBtn.style.display = "block";
       playBtn.innerHTML = "▶️ 预览视频 Preview";
@@ -642,17 +686,14 @@
 
     // --- 纯净录屏模式逻辑 ---
     
-    // 1. 显示引导弹窗
     function showRecordGuide() {
       const video = document.getElementById("mainVideo");
       if(video.readyState < 1 && !video.src) {
         alert("请先加载视频");
         return;
       }
-      // 暂停可能正在进行的预览
       video.pause();
       video.currentTime = 0;
-      
       document.getElementById('recordGuideOverlay').style.display = 'flex';
     }
 
@@ -660,66 +701,91 @@
       document.getElementById('recordGuideOverlay').style.display = 'none';
     }
 
-    // 2. 真正开始：进入全屏，播放Intro，然后播放视频
-    function startCleanModeReal() {
-      closeGuide();
-      
-      // 进入全屏样式模式
-      document.body.classList.add('clean-mode');
-      
+    // 🚀 新增逻辑：触发火箭动画序列
+    function triggerRocketSequence() {
+        closeGuide();
+
+        // 1. 立即进入全屏（必须在点击事件中调用）
+        const docElm = document.documentElement;
+        if (docElm.requestFullscreen) { docElm.requestFullscreen().catch(()=>{}); }
+        else if (docElm.webkitRequestFullScreen) { docElm.webkitRequestFullScreen().catch(()=>{}); }
+
+        // 锁定横屏（如果支持）
+        try {
+            if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(err => console.log(err));
+            }
+        } catch(e) {}
+
+        // 进入“纯净模式”样式，隐藏多余元素
+        document.body.classList.add('clean-mode');
+        const video = document.getElementById("mainVideo");
+        video.controls = false;
+        document.getElementById("cleanControls").style.display = "none";
+
+        // 2. 显示火箭遮罩层
+        const rocketOverlay = document.getElementById("rocketOverlay");
+        const rocketWrapper = document.getElementById("rocketWrapper");
+        const countdownText = document.getElementById("countdown");
+        
+        rocketOverlay.style.display = "flex";
+        
+        // 重置动画状态
+        rocketOverlay.classList.remove('anim-shake', 'anim-launch');
+        rocketWrapper.style.transform = ''; // 清除之前的 transform
+        
+        // 3. 倒计时逻辑
+        let count = 3;
+        countdownText.innerText = count;
+        
+        // 开始抖动预热
+        rocketOverlay.classList.add('anim-shake');
+
+        const timer = setInterval(() => {
+            count--;
+            if (count > 0) {
+                countdownText.innerText = count;
+            } else {
+                clearInterval(timer);
+                countdownText.innerText = "🚀 Blast Off!";
+                
+                // 4. 起飞！
+                rocketOverlay.classList.remove('anim-shake');
+                rocketOverlay.classList.add('anim-launch');
+
+                // 5. 动画结束后切换到 Intro
+                setTimeout(() => {
+                   rocketOverlay.style.display = 'none';
+                   startIntroSequence(); // 调用原有的逻辑
+                }, 1200); // 与 flyUp 动画时间匹配
+            }
+        }, 1000); // 1秒间隔
+    }
+
+    // 真正的开始：播放Intro，然后播放视频 (逻辑与之前类似，但由火箭动画触发)
+    function startIntroSequence() {
       const video = document.getElementById("mainVideo");
       const intro = document.getElementById("introLayer");
       const controls = document.getElementById("cleanControls");
       
-      // 尝试进入浏览器原生全屏
-      const docElm = document.documentElement;
-      if (docElm.requestFullscreen) { docElm.requestFullscreen().catch(()=>{}); }
-      else if (docElm.webkitRequestFullScreen) { docElm.webkitRequestFullScreen().catch(()=>{}); }
-      
-      // 尝试强制横屏 (如果浏览器支持)
-      try {
-        if (screen.orientation && screen.orientation.lock) {
-          screen.orientation.lock('landscape').catch(err => {
-            console.log("Landscape lock not supported/allowed on this device", err);
-          });
-        }
-      } catch(e) {}
-
-      // 强制隐藏控件，防止录屏时出现
-      video.controls = false;
-      
-      // 确保悬浮控件先隐藏（不要挡住intro）
-      controls.style.display = "none";
-      // 重置暂停按钮图标
       document.getElementById("cleanPauseBtn").innerText = "⏸️";
       
       // 显示 Intro 图片
       intro.style.display = "flex";
       
-      // 使用 requestAnimationFrame 确保图片渲染后再开始倒计时
       requestAnimationFrame(() => {
-        // 这里设置为 3000ms (3秒)
         setTimeout(() => {
           intro.style.display = "none";
-          // 显示悬浮控制
           controls.style.display = "flex";
-          
-          // 开始播放视频
-          video.play().then(() => {
-            // 视频播放成功
-          }).catch(err => {
-            alert("自动播放被阻止，请点击屏幕开始");
-          });
-        }, 3000);
+          video.play().catch(err => alert("自动播放被阻止，请点击屏幕开始"));
+        }, 3000); // 3秒 Intro 展示
       });
       
-      // 视频播放结束后退出
       video.onended = () => {
-        exitCleanMode(true); // true 表示正常播放结束
+        exitCleanMode(true);
       };
     }
 
-    // 悬浮按钮功能：暂停/继续
     function toggleCleanPause() {
         const video = document.getElementById("mainVideo");
         const btn = document.getElementById("cleanPauseBtn");
@@ -732,16 +798,14 @@
         }
     }
 
-    // 3. 退出录屏模式
     function exitCleanMode(finished = false) {
       document.body.classList.remove('clean-mode');
-      document.getElementById("cleanControls").style.display = "none"; // 隐藏悬浮按钮
+      document.getElementById("cleanControls").style.display = "none";
+      document.getElementById("rocketOverlay").style.display = "none"; // 确保火箭隐藏
       
-      // 退出原生全屏
       if (document.exitFullscreen) { document.exitFullscreen().catch(()=>{}); }
       else if (document.webkitCancelFullScreen) { document.webkitCancelFullScreen().catch(()=>{}); }
       
-      // 解锁屏幕方向
       try {
          if (screen.orientation && screen.orientation.unlock) {
             screen.orientation.unlock();
@@ -751,20 +815,17 @@
       const video = document.getElementById("mainVideo");
       video.pause();
       video.currentTime = 0;
-      video.controls = true; // 恢复控件显示
-      // 恢复结束监听为默认
+      video.controls = true;
       video.onended = function() {
         document.getElementById("playBtn").innerHTML = "▶️ 预览视频 Preview";
       };
 
-      // 如果是播放结束导致的退出，显示提示弹窗
       if (finished) {
         document.getElementById("finishOverlay").style.display = "flex";
         document.getElementById("statusText").innerText = "✨ 录制结束！";
       }
     }
 
-    // 关闭结束提示弹窗
     function closeFinishOverlay() {
       document.getElementById("finishOverlay").style.display = "none";
     }
@@ -772,9 +833,7 @@
     // --- 彩蛋逻辑 ---
     let titleClickCount = 0;
     let titleClickTimer = null;
-    const titleElement = document.querySelector('h1');
-
-    titleElement.addEventListener('click', function() {
+    document.querySelector('h1').addEventListener('click', function() {
       titleClickCount++;
       if (titleClickCount === 1) {
         titleClickTimer = setTimeout(() => { titleClickCount = 0; }, 2000);
@@ -785,7 +844,6 @@
         clearTimeout(titleClickTimer);
       }
     });
-
   </script>
 </body>
 </html>
