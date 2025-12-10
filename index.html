@@ -228,6 +228,21 @@
     }
     .intro-fallback-text { z-index: 1; font-size: 24px; font-weight: bold; color: #EE5253; animation: pulse 1s infinite alternate; }
 
+    /* 悬浮控制按钮 */
+    #cleanControls {
+        position: fixed; top: 20px; right: 20px; z-index: 60; 
+        display: none; gap: 15px;
+    }
+    .float-btn {
+        background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(5px);
+        border: 1px solid rgba(255,255,255,0.3); color: #fff;
+        width: 44px; height: 44px; border-radius: 50%; font-size: 20px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: all 0.2s;
+    }
+    .float-btn:active { transform: scale(0.9); background: rgba(0,0,0,0.6); }
+    .float-btn-exit { background: rgba(238, 82, 83, 0.5); } 
+
     /* 弹窗通用 */
     .overlay-fullscreen {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -356,7 +371,7 @@
       <h2 style="margin:0 0 10px 0;">准备录制</h2>
       <div class="guide-step">
         1. 请下拉手机控制中心，开启 <span class="highlight">屏幕录制</span>。<br>
-        ⚠️打开<span class="highlight">“麦克风声音”</span>或<span class="highlight">“系统声音”</span><br><br>
+        ⚠️打开<span class="highlight">“麦克风声音”</span>及<span class="highlight">“系统声音”</span><br><br>
         2. 开启录屏后，点击下方的 <b>GO</b> 按钮。<br><br>
         3. 请<span class="highlight">佩戴耳机</span>配音哦，不然视频原声会重叠
       </div>
@@ -402,6 +417,12 @@
       <div class="monster-gift">👾</div><div class="monster-gift" style="animation-delay: 0.1s">👾</div><div class="monster-gift" style="animation-delay: 0.2s">👾</div>
     </div>
     <button class="btn btn-primary" onclick="document.getElementById('eggOverlay').style.display='none'" style="width: 200px;">收下奖励</button>
+  </div>
+
+  <!-- 纯净模式悬浮控制 -->
+  <div id="cleanControls">
+    <div class="float-btn" id="cleanPauseBtn" onclick="toggleCleanPause()">⏸️</div>
+    <div class="float-btn float-btn-exit" onclick="exitCleanMode(false)">🚪</div>
   </div>
 
   <!-- 主容器 -->
@@ -700,6 +721,7 @@
         document.body.classList.add('clean-mode');
         const video = document.getElementById("mainVideo");
         video.controls = false;
+        document.getElementById("cleanControls").style.display = "none";
 
         // 2. 显示火箭遮罩层
         const rocketOverlay = document.getElementById("rocketOverlay");
@@ -744,6 +766,9 @@
     function startIntroSequence() {
       const video = document.getElementById("mainVideo");
       const intro = document.getElementById("introLayer");
+      const controls = document.getElementById("cleanControls");
+      
+      document.getElementById("cleanPauseBtn").innerText = "⏸️";
       
       // 显示 Intro 图片
       intro.style.display = "flex";
@@ -751,7 +776,7 @@
       requestAnimationFrame(() => {
         setTimeout(() => {
           intro.style.display = "none";
-          // 移除控制按钮的显示逻辑
+          controls.style.display = "flex";
           video.play().catch(err => alert("自动播放被阻止，请点击屏幕开始"));
         }, 3000); // 3秒 Intro 展示
       });
@@ -761,9 +786,21 @@
       };
     }
 
+    function toggleCleanPause() {
+        const video = document.getElementById("mainVideo");
+        const btn = document.getElementById("cleanPauseBtn");
+        if(video.paused) {
+            video.play();
+            btn.innerText = "⏸️";
+        } else {
+            video.pause();
+            btn.innerText = "▶️";
+        }
+    }
+
     function exitCleanMode(finished = false) {
       document.body.classList.remove('clean-mode');
-      // 移除隐藏控制按钮的逻辑，因为元素已删除
+      document.getElementById("cleanControls").style.display = "none";
       document.getElementById("rocketOverlay").style.display = "none"; // 确保火箭隐藏
       
       if (document.exitFullscreen) { document.exitFullscreen().catch(()=>{}); }
