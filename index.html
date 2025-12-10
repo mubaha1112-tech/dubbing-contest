@@ -234,7 +234,7 @@
         position: fixed; inset: 0; background: #000; z-index: 50;
         display: none; align-items: center; justify-content: center;
     }
-    /* 修改：强制图片不裁剪，完整显示 */
+    /* 强制图片完整显示，不裁剪 */
     #introLayer img { 
         width: 100%; height: 100%; 
         object-fit: contain; 
@@ -245,8 +245,8 @@
     #cleanControls {
         position: fixed;
         top: 20px; right: 20px;
-        z-index: 60; /* 比Intro层高，但Intro显示时我们会手动隐藏这个div */
-        display: none; /* 默认隐藏，JS控制在clean mode下且Intro结束后显示 */
+        z-index: 60; 
+        display: none; 
         gap: 15px;
     }
     .float-btn {
@@ -291,9 +291,6 @@
 </head>
 <body class="welcome-active">
 
-  <!-- 预加载 Intro 图片 (隐藏) -->
-  <img src="intro.png" style="display:none;" id="preloadIntro">
-
   <!-- 欢迎页 -->
   <div id="welcome" class="welcome-screen">
     <video id="welcomeVideo" class="welcome-bgvideo" muted autoplay playsinline loop>
@@ -315,7 +312,7 @@
       <h2 style="margin:0 0 10px 0;">准备录制</h2>
       <div class="guide-step">
         1. 请下拉手机控制中心，开启 <span class="highlight">屏幕录制</span>。<br>
-        <span style="font-size:13px; color:#666;">(⚠️ 请确保录屏设置为“录制麦克风声音”以及“系统声音”)</span><br><br>
+        <span style="font-size:13px; color:#666;">(⚠️ 安卓用户请确保录屏设置为“录制麦克风声音”或“系统声音”)</span><br><br>
         2. 开启录屏后，点击下方的 <b>GO</b> 按钮。<br><br>
         3. 视频将全屏播放，请开始您的配音表演！
       </div>
@@ -370,7 +367,7 @@
 
     <!-- 视频播放区 -->
     <div id="video-container">
-      <!-- Intro 覆盖层 -->
+      <!-- Intro 覆盖层 (图片使用intro.png) -->
       <div id="introLayer"><img src="intro.png" alt="Intro" id="introImgElement"></div>
       
       <video id="mainVideo"
@@ -399,6 +396,11 @@
   </div>
 
   <script>
+    // --- 强制预加载 Intro 图片 ---
+    // 这会在脚本执行之初就开始下载图片，确保家长阅读弹窗时图片已就绪
+    const preloadIntroImage = new Image();
+    preloadIntroImage.src = 'intro.png';
+
     // --- 数据配置 ---
     const videoDatabase = {
       "K2A": [
@@ -519,10 +521,6 @@
       const wVideo = document.getElementById('welcomeVideo');
       const enterBtn = document.getElementById('welcomeEnterBtn');
       
-      // 预加载 intro 图片
-      const preloadImg = new Image();
-      preloadImg.src = 'intro.png';
-
       enterBtn.addEventListener('click', () => {
         welcome.classList.add('hidden');
         document.body.classList.remove('welcome-active');
@@ -661,11 +659,12 @@
       // 重置暂停按钮图标
       document.getElementById("cleanPauseBtn").innerText = "⏸️";
       
-      // 显示 Intro 图片 1.5秒
+      // 显示 Intro 图片
       intro.style.display = "flex";
       
       // 使用 requestAnimationFrame 确保图片渲染后再开始倒计时
       requestAnimationFrame(() => {
+        // 这里设置为 3000ms (3秒)
         setTimeout(() => {
           intro.style.display = "none";
           // 显示悬浮控制
@@ -677,7 +676,7 @@
           }).catch(err => {
             alert("自动播放被阻止，请点击屏幕开始");
           });
-        }, 1500);
+        }, 3000);
       });
       
       // 视频播放结束后退出
