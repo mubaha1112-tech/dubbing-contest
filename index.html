@@ -24,7 +24,6 @@
       padding: 20px 10px;
       text-align: center;
       color: var(--text-dark);
-      /* 防止下拉刷新影响体验 */
       overscroll-behavior-y: contain; 
     }
 
@@ -40,7 +39,7 @@
       transition: all 0.3s ease;
     }
 
-    /* 欢迎页样式保持不变 */
+    /* 欢迎页样式 */
     .welcome-screen {
       position: fixed;
       inset: 0;
@@ -173,7 +172,6 @@
       background: linear-gradient(135deg, #fce38a 0%, #f38181 100%);
       display: none; margin-bottom: 10px; color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
     }
-    /* 录屏模式按钮 */
     .btn-record-mode { 
       background: linear-gradient(to right, #ff5f6d, #ffc371); 
       display: none; 
@@ -191,7 +189,6 @@
       object-fit: contain;
     }
     
-    /* 提示与状态 */
     .status-text { margin-top: 15px; font-weight: bold; color: var(--rabbit-red); min-height: 24px; font-size: 15px; }
     .tip {
       font-size: 13px; color: #e67e22; margin-top: 12px; background: #fff3e0; padding: 12px; border-radius: 15px;
@@ -207,7 +204,6 @@
         border: none; border-radius: 0; background: #000;
         display: flex; flex-direction: column; justify-content: center;
     }
-    /* 隐藏除视频容器外的所有元素 */
     body.clean-mode h1, 
     body.clean-mode .step-label, 
     body.clean-mode select, 
@@ -233,31 +229,6 @@
     /* 强制隐藏视频原生控件 */
     body.clean-mode video::-webkit-media-controls { display: none !important; }
 
-    /* 自定义控制层 (Pause/Stop) */
-    .clean-controls {
-        position: fixed;
-        top: 20px; right: 20px;
-        z-index: 10001;
-        display: none; /* JS控制显示 */
-        flex-direction: column;
-        gap: 10px;
-    }
-    body.clean-mode .clean-controls { display: flex; }
-
-    .ctrl-btn {
-        background: rgba(0,0,0,0.5);
-        border: 1px solid rgba(255,255,255,0.4);
-        color: #fff;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 14px;
-        font-weight: bold;
-        backdrop-filter: blur(4px);
-        cursor: pointer;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-    }
-    .ctrl-btn.stop { background: rgba(220, 20, 60, 0.7); border-color: #ff4d4f; }
-    
     /* Intro 图片层 */
     #introLayer {
         position: absolute; inset: 0; background: #000; z-index: 50;
@@ -265,7 +236,7 @@
     }
     #introLayer img { width: 100%; height: 100%; object-fit: contain; }
 
-    /* 全屏引导弹窗 */
+    /* 弹窗通用样式 */
     .overlay-fullscreen {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0, 0, 0, 0.92);
@@ -322,10 +293,16 @@
     </div>
   </div>
 
-  <!-- 录制模式下的悬浮控制按钮 -->
-  <div class="clean-controls" id="cleanControls">
-    <button class="ctrl-btn" id="cleanPauseBtn" onclick="toggleCleanPause()">⏸ 暂停</button>
-    <button class="ctrl-btn stop" onclick="exitCleanMode()">⏹ 结束录制</button>
+  <!-- 结束提示弹窗 -->
+  <div id="finishOverlay" class="overlay-fullscreen">
+    <div class="guide-card">
+      <div class="guide-icon">🎉✂️</div>
+      <h2 style="margin:0 0 10px 0;">录制完成</h2>
+      <div class="guide-step" style="text-align: center;">
+        请到手机相册查看刚才的录屏视频，<br>并<span class="highlight">发送给老师进行剪裁</span>。
+      </div>
+      <button class="btn btn-primary" onclick="closeFinishOverlay()">知道了</button>
+    </div>
   </div>
   
   <!-- 彩蛋弹窗 -->
@@ -625,10 +602,19 @@
       if (docElm.requestFullscreen) { docElm.requestFullscreen().catch(()=>{}); }
       else if (docElm.webkitRequestFullScreen) { docElm.webkitRequestFullScreen().catch(()=>{}); }
       
+      // 尝试强制横屏 (如果浏览器支持)
+      try {
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(err => {
+            console.log("Landscape lock not supported/allowed on this device", err);
+          });
+        }
+      } catch(e) {}
+
       // 强制隐藏控件，防止录屏时出现
       video.controls = false;
       
-      // 显示 Intro 图片 3秒
+      // 显示 Intro 图片 1.5秒
       intro.style.display = "flex";
       
       setTimeout(() => {
@@ -639,44 +625,48 @@
         }).catch(err => {
           alert("自动播放被阻止，请点击屏幕开始");
         });
-      }, 3000); // 3秒 Intro
+      }, 1500); // 改为 1.5秒
       
       // 视频播放结束后退出
       video.onended = () => {
-        exitCleanMode();
+        exitCleanMode(true); // true 表示正常播放结束
       };
     }
 
-    // 3. 暂停/继续 (在纯净模式下)
-    function toggleCleanPause() {
-      const video = document.getElementById("mainVideo");
-      const btn = document.getElementById("cleanPauseBtn");
-      if(video.paused) {
-        video.play();
-        btn.innerText = "⏸ 暂停";
-      } else {
-        video.pause();
-        btn.innerText = "▶ 继续";
-      }
-    }
-
-    // 4. 退出录屏模式
-    function exitCleanMode() {
+    // 3. 退出录屏模式
+    function exitCleanMode(finished = false) {
       document.body.classList.remove('clean-mode');
       
       // 退出原生全屏
       if (document.exitFullscreen) { document.exitFullscreen().catch(()=>{}); }
       else if (document.webkitCancelFullScreen) { document.webkitCancelFullScreen().catch(()=>{}); }
       
+      // 解锁屏幕方向 (如果之前锁定了)
+      try {
+         if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+         }
+      } catch(e) {}
+
       const video = document.getElementById("mainVideo");
       video.pause();
       video.currentTime = 0;
       video.controls = true; // 恢复控件显示
-      
-      // 恢复按钮状态
-      document.getElementById("cleanPauseBtn").innerText = "⏸ 暂停";
-      
-      document.getElementById("statusText").innerText = "✨ 录制结束！视频已保存在您的相册中。";
+      // 恢复结束监听为默认（防止下次预览时触发弹窗）
+      video.onended = function() {
+        document.getElementById("playBtn").innerHTML = "▶️ 预览视频 Preview";
+      };
+
+      // 如果是播放结束导致的退出，显示提示弹窗
+      if (finished) {
+        document.getElementById("finishOverlay").style.display = "flex";
+        document.getElementById("statusText").innerText = "✨ 录制结束！";
+      }
+    }
+
+    // 关闭结束提示弹窗
+    function closeFinishOverlay() {
+      document.getElementById("finishOverlay").style.display = "none";
     }
 
     // --- 彩蛋逻辑 ---
